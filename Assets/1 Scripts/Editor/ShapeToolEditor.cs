@@ -147,7 +147,7 @@ public class ShapeToolEditor : Editor
         Debug.Log($"Generated shape '{shapeData.id}' in scene.");
     }
 
-    private void ClearChildren(Transform t)
+    private static void ClearChildren(Transform t)
     {
         for (int i = t.childCount - 1; i >= 0; i--)
         {
@@ -206,5 +206,55 @@ public class ShapeToolEditor : Editor
     {
         string json = JsonUtility.ToJson(loadedShapes, true);
         File.WriteAllText(tool.shapesJsonPath, json);
+    }
+
+    /// <summary>
+    /// Utility method for MapTool to generate a shape by its ID.
+    /// </summary>
+    public static void GenerateShapeFromId(ShapeTool tool, ShapeTemplate shapeTpl, string targetShapeId)
+    {
+        if (string.IsNullOrEmpty(tool.shapesJsonPath) || !File.Exists(tool.shapesJsonPath)) 
+        {
+            Debug.LogError($"Shapes JSON not found: {tool.shapesJsonPath}");
+            return;
+        }
+        
+        string shapesJson = File.ReadAllText(tool.shapesJsonPath);
+        var loaded = JsonUtility.FromJson<PixiExportTool.ShapesRoot>(shapesJson);
+        if (loaded == null || loaded.shapes == null) return;
+
+        var shapeData = loaded.shapes.FirstOrDefault(s => s.id == targetShapeId);
+        if (shapeData == null) 
+        {
+            Debug.LogWarning($"Shape '{targetShapeId}' not found in shapes.json.");
+            return;
+        }
+        
+        if (tool.cardPrefab == null) 
+        {
+            Debug.LogError("No Card Prefab assigned to the ShapeTool.");
+            return;
+        }
+        
+        ClearChildren(shapeTpl.transform);
+        shapeTpl.shapeId = targetShapeId;
+        
+        if (shapeData.slots == null) return;
+
+        foreach (var slot in shapeData.slots)
+        {
+            GameObject card = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
+            card.transform.SetParent(shapeTpl.transform);
+
+            float cx = slot.x / tool.positionMultiplier;
+            float cy = (tool.invertY ? -slot.y : slot.y) / tool.positionMultiplier;
+            float cangle = tool.invertAngle ? -slot.angle : slot.angle;
+
+            card.transform.localPosition = new Vector3(cx, cy, 0);
+            card.transform.localEulerAngles = new Vector3(0, 0, cangle);
+
+            CardGizmo gizmo = card.GetComponent<CardGizmo>();
+            if (gizmo != null) gizmo.layer = slot.layer;
+        }
     }
 }
