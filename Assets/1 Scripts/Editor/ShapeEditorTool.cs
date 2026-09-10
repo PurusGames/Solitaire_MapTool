@@ -123,7 +123,7 @@ public class ShapeEditorTool : EditorWindow
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
-            GUI.backgroundColor = Color.green;
+            GUI.backgroundColor = new Color(0.6f, 0.9f, 0.6f);
             if (GUILayout.Button("Save ALL Scene Shapes to JSON", GUILayout.Height(40)))
             {
                 SaveActiveShapeToJSON();

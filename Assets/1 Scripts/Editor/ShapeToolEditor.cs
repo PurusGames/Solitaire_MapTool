@@ -43,7 +43,7 @@ public class ShapeToolEditor : Editor
                     GenerateShapeInScene(tool, shapeTpl, shape);
                 }
                 
-                GUI.backgroundColor = new Color(1f, 0.4f, 0.4f);
+                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
                 if (GUILayout.Button("Delete", GUILayout.Width(60)))
                 {
                     if (EditorUtility.DisplayDialog("Delete Shape", $"Are you sure you want to delete shape '{shape.id}'?", "Yes", "No"))
@@ -74,7 +74,7 @@ public class ShapeToolEditor : Editor
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
-            GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
+            GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
             if (GUILayout.Button("Add New Card to Shape", GUILayout.Height(30)))
             {
                 if (tool.cardPrefab != null)
@@ -92,7 +92,7 @@ public class ShapeToolEditor : Editor
             GUI.backgroundColor = Color.white;
 
             GUILayout.Space(10);
-            GUI.backgroundColor = Color.green;
+            GUI.backgroundColor = new Color(0.6f, 0.9f, 0.6f);
             if (GUILayout.Button($"Save Overwrite ({shapeTpl.shapeId}) To JSON", GUILayout.Height(40)))
             {
                 SaveShapeToJSON(tool, shapeTpl);

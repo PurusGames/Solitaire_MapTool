@@ -48,7 +48,7 @@ public class MapToolEditor : Editor
                     GenerateMapInScene(tool, mapTpl, map);
                 }
                 
-                GUI.backgroundColor = new Color(1f, 0.4f, 0.4f);
+                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
                 if (GUILayout.Button("Delete", GUILayout.Width(60)))
                 {
                     if (EditorUtility.DisplayDialog("Delete Map", $"Are you sure you want to delete map '{map.id}'?", "Yes", "No"))
@@ -79,7 +79,7 @@ public class MapToolEditor : Editor
             GUILayout.EndHorizontal();
             
             GUILayout.Space(5);
-            GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
+            GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
             if (GUILayout.Button("Add New Shape to Map", GUILayout.Height(30)))
             {
                 if (tool.shapePrefab != null)
@@ -103,7 +103,7 @@ public class MapToolEditor : Editor
             }
 
             GUILayout.Space(10);
-            GUI.backgroundColor = Color.green;
+            GUI.backgroundColor = new Color(0.6f, 0.9f, 0.6f);
             if (GUILayout.Button($"Save Overwrite ({mapTpl.templateId}) To JSON", GUILayout.Height(40)))
             {
                 SaveMapToJSON(tool, mapTpl);
