@@ -9,8 +9,8 @@ public class ShapeEditorTool : EditorWindow
     private string shapesPath = "D:/PurusGame/solitaire-classic/assets/preload/jsons/shapes.json";
     private GameObject cardPrefab;
     private float positionMultiplier = 100f;
-    private bool invertY = false;
-    private bool invertAngle = false;
+    private bool invertY = true;
+    private bool invertAngle = true;
 
     private PixiExportTool.ShapesRoot loadedData;
     private Vector2 scrollPos;

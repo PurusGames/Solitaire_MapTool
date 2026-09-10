@@ -12,6 +12,6 @@ public class MapTool : MonoBehaviour
 
     [Header("Export Settings")]
     public float positionMultiplier = 100f;
-    public bool invertY = false;
-    public bool invertAngle = false;
+    public bool invertY = true;
+    public bool invertAngle = true;
 }

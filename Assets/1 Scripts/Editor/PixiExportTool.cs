@@ -8,8 +8,8 @@ public class PixiExportTool : EditorWindow
     private string shapesPath = "D:/PurusGame/solitaire-classic/assets/preload/jsons/shapes.json";
     private string mapsPath = "D:/PurusGame/solitaire-classic/assets/preload/jsons/mapTemplates.json";
 
-    private bool invertY = false;
-    private bool invertAngle = false;
+    private bool invertY = true;
+    private bool invertAngle = true;
     private float positionMultiplier = 100f;
 
     [MenuItem("Tools/PixiJS Exporter")]
