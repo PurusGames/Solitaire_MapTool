@@ -84,11 +84,17 @@ public class ShapeEditorTool : EditorWindow
                 GUILayout.Label(shape.id, GUILayout.Width(150));
                 GUILayout.Label($"{shape.slots.Length} slots", GUILayout.Width(60));
                 
-                if (GUILayout.Button("Load to Scene"))
+                Rect previewRect = GUILayoutUtility.GetRect(60, 60, GUILayout.Width(60), GUILayout.Height(60));
+                if (Event.current.type == EventType.Repaint)
+                {
+                    DrawShapePreview(previewRect, shape);
+                }
+
+                if (GUILayout.Button("Load to Scene", GUILayout.Height(60)))
                 {
                     GenerateShapeInScene(shape);
                 }
-                if (GUILayout.Button("Delete"))
+                if (GUILayout.Button("Delete", GUILayout.Height(60)))
                 {
                     if (EditorUtility.DisplayDialog("Delete Shape", $"Delete {shape.id}?", "Yes", "No"))
                     {
@@ -253,6 +259,96 @@ public class ShapeEditorTool : EditorWindow
             EditorUtility.DisplayDialog("Success", "Saved shapes from scene to JSON.", "OK");
         }
     }
+        private void DrawShapePreview(Rect rect, PixiExportTool.ShapeObject shape)
+    {
+        EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 1f));
+        if (shape.slots == null || shape.slots.Length == 0) return;
+
+        float nativeW = 1f;
+        float nativeH = 1.5f;
+        Texture2D tex = null;
+
+        if (cardPrefab != null)
+        {
+            SpriteRenderer sr = cardPrefab.GetComponentInChildren<SpriteRenderer>();
+            CardGizmo gizmo = cardPrefab.GetComponentInChildren<CardGizmo>();
+            float cScale = gizmo != null ? gizmo.collisionScale : 0.8f;
+            if (sr != null && sr.sprite != null)
+            {
+                nativeW = sr.sprite.bounds.size.x * cScale;
+                nativeH = sr.sprite.bounds.size.y * cScale;
+                tex = AssetPreview.GetAssetPreview(cardPrefab);
+                if (tex == null) tex = AssetPreview.GetMiniThumbnail(cardPrefab);
+            }
+        }
+
+        float minX = float.MaxValue, maxX = float.MinValue;
+        float minY = float.MaxValue, maxY = float.MinValue;
+
+        List<Vector2> visPositions = new List<Vector2>();
+        List<float> visAngles = new List<float>();
+
+        foreach (var s in shape.slots)
+        {
+            float sceneX = s.x / positionMultiplier;
+            float sceneY = (invertY ? -s.y : s.y) / positionMultiplier;
+            float angle = invertAngle ? -s.angle : s.angle;
+
+            visPositions.Add(new Vector2(sceneX, sceneY));
+            visAngles.Add(angle);
+
+            if (sceneX < minX) minX = sceneX;
+            if (sceneX > maxX) maxX = sceneX;
+            if (sceneY < minY) minY = sceneY;
+            if (sceneY > maxY) maxY = sceneY;
+        }
+
+        float width = maxX - minX;
+        float height = maxY - minY;
+        
+        float pad = Mathf.Max(nativeW, nativeH) * 1.5f; 
+        if (width == 0 && height == 0) pad = Mathf.Max(nativeW, nativeH) * 3f;
+
+        float sizeX = width + pad;
+        float sizeY = height + pad;
+        float size = Mathf.Max(sizeX, sizeY);
+        if (size == 0) size = 5f;
+
+        float centerX = (minX + maxX) / 2f;
+        float centerY = (minY + maxY) / 2f;
+
+        float ppuGUI = rect.width / size;
+        float cardW = nativeW * ppuGUI; 
+        float cardH = nativeH * ppuGUI;
+
+        GUI.BeginGroup(rect);
+        for(int i=0; i<shape.slots.Length; i++)
+        {
+            Vector2 vPos = visPositions[i];
+            float vAng = visAngles[i];
+
+            float guiX = (vPos.x - centerX) * ppuGUI;
+            float guiY = -(vPos.y - centerY) * ppuGUI; 
+
+            float rx = (rect.width / 2f) + guiX;
+            float ry = (rect.height / 2f) + guiY;
+
+            Matrix4x4 oldMat = GUI.matrix;
+            GUIUtility.RotateAroundPivot(-vAng, new Vector2(rx, ry));
+            
+            Rect cRect = new Rect(rx - cardW / 2f, ry - cardH / 2f, cardW, cardH);
+            if (tex != null)
+            {
+                GUI.DrawTexture(cRect, tex, ScaleMode.StretchToFill);
+            }
+            else
+            {
+                EditorGUI.DrawRect(cRect, Color.white);
+                EditorGUI.DrawRect(new Rect(cRect.x+1, cRect.y+1, cRect.width-2, cRect.height-2), new Color(0.2f, 0.6f, 0.3f));
+            }
+
+            GUI.matrix = oldMat;
+        }
+        GUI.EndGroup();
+    }
 }
-
-
