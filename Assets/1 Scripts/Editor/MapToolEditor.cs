@@ -77,6 +77,12 @@ public class MapToolEditor : Editor
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+            if (GUILayout.Button("Center Map to (0,0)"))
+            {
+                CenterMap(mapTpl);
+            }
+
             GUILayout.Space(10);
             GUI.backgroundColor = Color.green;
             if (GUILayout.Button($"Save Overwrite ({mapTpl.templateId}) To JSON", GUILayout.Height(40)))
@@ -171,12 +177,58 @@ public class MapToolEditor : Editor
         }
     }
 
+    private void CenterMap(MapTemplate mt)
+    {
+        CardGizmo[] cards = mt.GetComponentsInChildren<CardGizmo>();
+        if (cards.Length == 0)
+        {
+            Debug.LogWarning("No cards found in map! Cannot determine map center.");
+            return;
+        }
+
+        Vector3 min = new Vector3(float.MaxValue, float.MaxValue, 0);
+        Vector3 max = new Vector3(float.MinValue, float.MinValue, 0);
+
+        foreach (var card in cards)
+        {
+            Vector3 localPos = mt.transform.InverseTransformPoint(card.transform.position);
+            if (localPos.x < min.x) min.x = localPos.x;
+            if (localPos.x > max.x) max.x = localPos.x;
+            if (localPos.y < min.y) min.y = localPos.y;
+            if (localPos.y > max.y) max.y = localPos.y;
+        }
+
+        Vector3 center = (min + max) / 2f;
+
+        if (center.sqrMagnitude < 0.0001f)
+        {
+            Debug.Log("Map is already centered.");
+            return;
+        }
+
+        Undo.RecordObjects(mt.GetComponentsInChildren<Transform>(), "Center Map");
+
+        ShapeTemplate[] shapes = mt.GetComponentsInChildren<ShapeTemplate>();
+        foreach (var shape in shapes)
+        {
+            shape.transform.localPosition -= center;
+        }
+
+        Debug.Log($"Map centered! Applied offset: {-center}");
+        SceneView.RepaintAll();
+    }
+
     private void SaveMapToJSON(MapTool tool, MapTemplate mt)
     {
         if (loadedMaps == null)
         {
             EditorUtility.DisplayDialog("Error", "Maps not loaded! Please load JSON first.", "OK");
             return;
+        }
+
+        if (tool.autoCenterOnSave)
+        {
+            CenterMap(mt);
         }
 
         PixiExportTool.MapObject existingMap = loadedMaps.FirstOrDefault(m => m.id == mt.templateId);

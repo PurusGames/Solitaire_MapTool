@@ -13,4 +13,8 @@ public class MapTool : MonoBehaviour
     public float positionMultiplier = 100f;
     public bool invertY = true;
     public bool invertAngle = true;
+    
+    [Header("Auto Format")]
+    [Tooltip("If true, the map will be automatically centered at (0,0) before saving.")]
+    public bool autoCenterOnSave = true;
 }
