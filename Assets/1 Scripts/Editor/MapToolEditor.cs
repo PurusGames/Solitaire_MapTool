@@ -8,7 +8,6 @@ using System.Linq;
 public class MapToolEditor : Editor
 {
     private PixiExportTool.MapObject[] loadedMaps;
-    private PixiExportTool.ShapesRoot loadedShapes;
 
     private Vector2 scrollPos;
     private string newMapId = "new_map_id";
@@ -27,7 +26,7 @@ public class MapToolEditor : Editor
         MapTemplate mapTpl = tool.GetComponent<MapTemplate>();
 
         GUILayout.Space(15);
-        if (GUILayout.Button("Load JSONs", GUILayout.Height(30)))
+        if (GUILayout.Button("Load JSON", GUILayout.Height(30)))
         {
             LoadJSONs(tool);
         }
@@ -95,12 +94,6 @@ public class MapToolEditor : Editor
             EditorUtility.DisplayDialog("Error", $"Maps JSON not found at: {tool.mapsJsonPath}", "OK");
             return;
         }
-        
-        if (string.IsNullOrEmpty(tool.shapesJsonPath) || !File.Exists(tool.shapesJsonPath))
-        {
-            EditorUtility.DisplayDialog("Error", $"Shapes JSON not found at: {tool.shapesJsonPath}", "OK");
-            return;
-        }
 
         // Load Maps
         string mapsJson = File.ReadAllText(tool.mapsJsonPath);
@@ -108,11 +101,7 @@ public class MapToolEditor : Editor
         ArrayWrapper<PixiExportTool.MapObject> mapWrapper = JsonUtility.FromJson<ArrayWrapper<PixiExportTool.MapObject>>(wrappedMapsJson);
         loadedMaps = mapWrapper != null ? mapWrapper.Items : new PixiExportTool.MapObject[0];
 
-        // Load Shapes
-        string shapesJson = File.ReadAllText(tool.shapesJsonPath);
-        loadedShapes = JsonUtility.FromJson<PixiExportTool.ShapesRoot>(shapesJson);
-
-        Debug.Log($"Loaded {loadedMaps.Length} maps and {(loadedShapes?.shapes?.Length ?? 0)} shapes.");
+        Debug.Log($"Loaded {loadedMaps.Length} maps.");
     }
 
     private void CreateNewMap(MapTemplate curTemplate)
@@ -120,20 +109,21 @@ public class MapToolEditor : Editor
         curTemplate.templateId = newMapId;
         ClearChildren(curTemplate.transform);
         SceneView.RepaintAll();
-        Debug.Log($"Created empty map '{newMapId}'. You can now place ShapeTemplates inside it.");
+        Debug.Log($"Created empty map '{newMapId}'. You can now place Shape prefab instances inside it.");
     }
 
     private void GenerateMapInScene(MapTool tool, MapTemplate curTemplate, PixiExportTool.MapObject mapData)
     {
-        if (tool.cardPrefab == null)
+        if (tool.shapePrefab == null)
         {
-            EditorUtility.DisplayDialog("Error", "Please assign a Card Prefab in the MapTool.", "OK");
+            EditorUtility.DisplayDialog("Error", "Please assign a Shape Prefab in the MapTool.", "OK");
             return;
         }
-
-        if (loadedShapes == null || loadedShapes.shapes == null)
+        
+        ShapeTool defaultShapeTool = tool.shapePrefab.GetComponent<ShapeTool>();
+        if (defaultShapeTool == null)
         {
-            EditorUtility.DisplayDialog("Error", "No shapes loaded from JSON! Please ensure shapes.json has data.", "OK");
+            EditorUtility.DisplayDialog("Error", "The assigned Shape Prefab is missing the 'ShapeTool' component.", "OK");
             return;
         }
 
@@ -144,14 +134,8 @@ public class MapToolEditor : Editor
 
         foreach (var mapSlot in mapData.map)
         {
-            PixiExportTool.ShapeObject shapeData = loadedShapes.shapes.FirstOrDefault(s => s.id == mapSlot.shapeId);
-            if (shapeData == null)
-            {
-                Debug.LogWarning($"Shape '{mapSlot.shapeId}' not found in shapes.json! Skipping.");
-                continue;
-            }
-
-            GameObject shapeGo = new GameObject(mapSlot.id);
+            GameObject shapeGo = (GameObject)PrefabUtility.InstantiatePrefab(tool.shapePrefab);
+            shapeGo.name = mapSlot.id;
             shapeGo.transform.SetParent(curTemplate.transform);
 
             float stX = mapSlot.x / tool.positionMultiplier;
@@ -161,27 +145,16 @@ public class MapToolEditor : Editor
             shapeGo.transform.localPosition = new Vector3(stX, stY, 0);
             shapeGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
 
-            ShapeTemplate shapeTemplate = shapeGo.AddComponent<ShapeTemplate>();
+            ShapeTemplate shapeTemplate = shapeGo.GetComponent<ShapeTemplate>();
+            if (shapeTemplate == null) shapeTemplate = shapeGo.AddComponent<ShapeTemplate>();
             shapeTemplate.shapeId = mapSlot.shapeId;
             shapeTemplate.baseLayer = mapSlot.baseLayer;
 
-            if (shapeData.slots != null)
+            ShapeTool sTool = shapeGo.GetComponent<ShapeTool>();
+            if (sTool != null)
             {
-                foreach (var slot in shapeData.slots)
-                {
-                    GameObject card = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
-                    card.transform.SetParent(shapeGo.transform);
-
-                    float cx = slot.x / tool.positionMultiplier;
-                    float cy = (tool.invertY ? -slot.y : slot.y) / tool.positionMultiplier;
-                    float cangle = tool.invertAngle ? -slot.angle : slot.angle;
-
-                    card.transform.localPosition = new Vector3(cx, cy, 0);
-                    card.transform.localEulerAngles = new Vector3(0, 0, cangle);
-
-                    CardGizmo gizmo = card.GetComponent<CardGizmo>();
-                    if (gizmo != null) gizmo.layer = slot.layer;
-                }
+                // Let the ShapeTool automatically construct the cards inside it using its own configurations
+                ShapeToolEditor.GenerateShapeFromId(sTool, shapeTemplate, mapSlot.shapeId);
             }
         }
 
@@ -202,7 +175,7 @@ public class MapToolEditor : Editor
     {
         if (loadedMaps == null)
         {
-            EditorUtility.DisplayDialog("Error", "Maps not loaded! Please load JSONs first.", "OK");
+            EditorUtility.DisplayDialog("Error", "Maps not loaded! Please load JSON first.", "OK");
             return;
         }
 
