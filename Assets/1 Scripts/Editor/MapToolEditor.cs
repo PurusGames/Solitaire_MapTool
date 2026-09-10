@@ -34,9 +34,9 @@ public class MapToolEditor : Editor
         if (loadedMaps != null && loadedMaps.Length > 0)
         {
             GUILayout.Space(10);
-            GUILayout.Label($"Loaded {loadedMaps.Length} Map Templates:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Loaded {loadedMaps.Length} Map Templates:", EditorStyles.boldLabel);
             
-            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(250));
             foreach (var map in loadedMaps)
             {
@@ -67,8 +67,9 @@ public class MapToolEditor : Editor
             EditorGUILayout.EndVertical();
 
             GUILayout.Space(15);
-            GUILayout.Label("Current Scene Map Actions:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Current Scene Map Actions:", EditorStyles.boldLabel);
             
+            EditorGUILayout.BeginVertical("helpbox");
             GUILayout.BeginHorizontal();
             newMapId = EditorGUILayout.TextField("", newMapId, GUILayout.Width(150));
             if (GUILayout.Button("Create New Empty Map"))
@@ -76,6 +77,24 @@ public class MapToolEditor : Editor
                 CreateNewMap(mapTpl);
             }
             GUILayout.EndHorizontal();
+            
+            GUILayout.Space(5);
+            GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
+            if (GUILayout.Button("Add New Shape to Map", GUILayout.Height(30)))
+            {
+                if (tool.shapePrefab != null)
+                {
+                    GameObject newShape = (GameObject)PrefabUtility.InstantiatePrefab(tool.shapePrefab);
+                    newShape.transform.SetParent(mapTpl.transform, false);
+                    newShape.name = "new_shape_" + (mapTpl.transform.childCount);
+                    Selection.activeGameObject = newShape;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Error", "Missing Shape Prefab in MapTool!", "OK");
+                }
+            }
+            GUI.backgroundColor = Color.white;
 
             GUILayout.Space(5);
             if (GUILayout.Button("Center Map to (0,0)"))
@@ -90,6 +109,7 @@ public class MapToolEditor : Editor
                 SaveMapToJSON(tool, mapTpl);
             }
             GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndVertical();
         }
     }
 
