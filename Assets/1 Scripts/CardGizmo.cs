@@ -7,7 +7,6 @@ public class CardGizmo : MonoBehaviour
     public int layer = 0;
 
     [Header("Collision Settings")]
-    [Tooltip("Hệ số scale gốc từ mã PixiJS (COLLISION_SCALE = 0.8). Hãy cẩn thận nếu Transform của bạn đã scale sẵn.")]
     public float collisionScale = 0.8f;
 
     public Color gizmoColor = Color.green;
