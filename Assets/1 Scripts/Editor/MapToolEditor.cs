@@ -165,7 +165,7 @@ public class MapToolEditor : Editor
         }
 
         Selection.activeGameObject = curTemplate.gameObject;
-        SceneView.FrameLastActiveSceneView();
+        // SceneView.FrameLastActiveSceneView();
         Debug.Log($"Generated map '{mapData.id}' in scene.");
     }
 

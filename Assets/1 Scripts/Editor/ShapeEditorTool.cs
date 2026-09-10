@@ -196,7 +196,7 @@ public class ShapeEditorTool : EditorWindow
 
         Selection.activeGameObject = go;
         // Frame the object
-        SceneView.FrameLastActiveSceneView();
+        // SceneView.FrameLastActiveSceneView();
     }
 
     private void SaveActiveShapeToJSON()

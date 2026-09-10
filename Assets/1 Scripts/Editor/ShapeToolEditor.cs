@@ -143,7 +143,7 @@ public class ShapeToolEditor : Editor
         }
 
         Selection.activeGameObject = shapeTpl.gameObject;
-        SceneView.FrameLastActiveSceneView();
+        // SceneView.FrameLastActiveSceneView();
         Debug.Log($"Generated shape '{shapeData.id}' in scene.");
     }
 
