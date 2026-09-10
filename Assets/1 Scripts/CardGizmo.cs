@@ -5,6 +5,7 @@ using UnityEngine;
 public class CardGizmo : MonoBehaviour
 {
     [Header("Export Settings")]
+    [HideInInspector]
     public int layer = 0;
 
     [Header("Collision Settings")]

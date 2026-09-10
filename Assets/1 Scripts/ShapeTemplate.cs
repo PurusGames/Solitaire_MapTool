@@ -8,6 +8,7 @@ public class ShapeTemplate : MonoBehaviour
     public string shapeId = "new_shape";
     
     [Header("Map Instance Data (For mapTemplates.json)")]
+    [HideInInspector]
     public int baseLayer = 1;
 
     private int _lastLayer = -9999;
