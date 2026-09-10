@@ -59,8 +59,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapsJsonPath: D:/PurusGame/solitaire-classic/assets/preload/jsons/mapTemplates.json
-  shapesJsonPath: D:/PurusGame/solitaire-classic/assets/preload/jsons/shapes.json
-  cardPrefab: {fileID: 8994729036240357855, guid: 87d34c18b75f6b34399c91c01f61abc1, type: 3}
+  shapePrefab: {fileID: 6101201248547407646, guid: 83eb7e68353a9614bafe72b2488b61a7, type: 3}
   positionMultiplier: 100
   invertY: 1
   invertAngle: 1
