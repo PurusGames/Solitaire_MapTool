@@ -28,9 +28,9 @@ public class ShapeToolEditor : Editor
         if (loadedShapes != null && loadedShapes.shapes != null && loadedShapes.shapes.Length > 0)
         {
             GUILayout.Space(10);
-            GUILayout.Label($"Loaded {loadedShapes.shapes.Length} Shapes:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Loaded {loadedShapes.shapes.Length} Shapes:", EditorStyles.boldLabel);
             
-            EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(250));
             foreach (var shape in loadedShapes.shapes)
             {
@@ -62,8 +62,9 @@ public class ShapeToolEditor : Editor
             EditorGUILayout.EndVertical();
 
             GUILayout.Space(15);
-            GUILayout.Label("Current Scene Shape Actions:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Current Scene Shape Actions:", EditorStyles.boldLabel);
             
+            EditorGUILayout.BeginVertical("helpbox");
             GUILayout.BeginHorizontal();
             newShapeId = EditorGUILayout.TextField("", newShapeId, GUILayout.Width(150));
             if (GUILayout.Button("Create New Empty Shape"))
@@ -72,6 +73,24 @@ public class ShapeToolEditor : Editor
             }
             GUILayout.EndHorizontal();
 
+            GUILayout.Space(5);
+            GUI.backgroundColor = new Color(0.6f, 0.8f, 1f);
+            if (GUILayout.Button("Add New Card to Shape", GUILayout.Height(30)))
+            {
+                if (tool.cardPrefab != null)
+                {
+                    GameObject newCard = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
+                    newCard.transform.SetParent(shapeTpl.transform, false);
+                    newCard.name = "card_" + (shapeTpl.transform.childCount);
+                    Selection.activeGameObject = newCard;
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Error", "Missing Card Prefab in ShapeTool!", "OK");
+                }
+            }
+            GUI.backgroundColor = Color.white;
+
             GUILayout.Space(10);
             GUI.backgroundColor = Color.green;
             if (GUILayout.Button($"Save Overwrite ({shapeTpl.shapeId}) To JSON", GUILayout.Height(40)))
@@ -79,6 +98,7 @@ public class ShapeToolEditor : Editor
                 SaveShapeToJSON(tool, shapeTpl);
             }
             GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndVertical();
         }
     }
 
