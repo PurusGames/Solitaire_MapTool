@@ -110,17 +110,48 @@ public class ShapeEditorTool : EditorWindow
             GUILayout.EndScrollView();
 
             GUILayout.Space(10);
+            EditorGUILayout.BeginVertical("helpbox");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Create New Blank Shape", GUILayout.Height(30)))
+            if (GUILayout.Button("Create Blank Shape in Scene", GUILayout.Height(40)))
             {
                 CreateBlankShape();
             }
-            if (GUILayout.Button("Save Scene Shape to JSON", GUILayout.Height(30)))
+            if (GUILayout.Button("Add Card to Selected Shape", GUILayout.Height(40)))
+            {
+                AddCardToSelectedShape();
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+            GUI.backgroundColor = Color.green;
+            if (GUILayout.Button("Save ALL Scene Shapes to JSON", GUILayout.Height(40)))
             {
                 SaveActiveShapeToJSON();
             }
-            GUILayout.EndHorizontal();
+            GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndVertical();
         }
+    }
+
+    private void AddCardToSelectedShape()
+    {
+        if (cardPrefab == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Please assign a Card Prefab first.", "OK");
+            return;
+        }
+        
+        GameObject activeObj = Selection.activeGameObject;
+        if (activeObj == null || activeObj.GetComponent<ShapeTemplate>() == null)
+        {
+            EditorUtility.DisplayDialog("Notice", "Please select a Shape in the Hierarchy before adding a card.", "OK");
+            return;
+        }
+
+        GameObject card = (GameObject)PrefabUtility.InstantiatePrefab(cardPrefab);
+        card.transform.SetParent(activeObj.transform, false);
+        card.name = "card_" + activeObj.transform.childCount;
+        Selection.activeGameObject = card;
     }
 
     private void LoadJSON()
