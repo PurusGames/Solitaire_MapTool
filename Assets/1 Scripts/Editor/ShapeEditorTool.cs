@@ -187,7 +187,7 @@ public class ShapeEditorTool : EditorWindow
             float y = (invertY ? -slot.y : slot.y) / positionMultiplier;
             float angle = invertAngle ? -slot.angle : slot.angle;
             
-            card.transform.localPosition = new Vector3(x, y, 0);
+            card.transform.localPosition = new Vector3(x, y, -slot.layer);
             card.transform.localEulerAngles = new Vector3(0, 0, angle);
 
             CardGizmo gizmo = card.GetComponent<CardGizmo>();

@@ -148,7 +148,7 @@ public class MapToolEditor : Editor
             float stY = (tool.invertY ? -mapSlot.y : mapSlot.y) / tool.positionMultiplier;
             float stAngle = tool.invertAngle ? -mapSlot.angle : mapSlot.angle;
 
-            shapeGo.transform.localPosition = new Vector3(stX, stY, 0);
+            shapeGo.transform.localPosition = new Vector3(stX, stY, -mapSlot.baseLayer);
             shapeGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
 
             ShapeTemplate shapeTemplate = shapeGo.GetComponent<ShapeTemplate>();
