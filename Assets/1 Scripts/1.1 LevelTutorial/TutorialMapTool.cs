@@ -83,4 +83,5 @@ public class TutorialMapTool : MonoBehaviour
     public float positionMultiplier = 100f;
     public bool invertY = true;
     public bool invertAngle = true;
+    public bool autoCenterOnSave = true;
 }
