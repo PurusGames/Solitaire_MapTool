@@ -1,0 +1,651 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5111456770962478777
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 937250429089260978}
+  - component: {fileID: 1292897339343374814}
+  - component: {fileID: 3593015336955119829}
+  m_Layer: 0
+  m_Name: Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &937250429089260978
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5111456770962478777}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.5069304, y: -0.2079046, z: 0.0054124244}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1292897339343374814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5111456770962478777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f96e879b2dd8874ab13c2420eb44e0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  templateId: tpl_20
+--- !u!114 &3593015336955119829
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5111456770962478777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23606a3c203b4fadb0268ec5cf183825, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapsJsonPath: /Users/purus/Documents/Project/solitaire-classic/assets/preload/jsons/mapTemplates.json
+  loadedMaps:
+  - id: tpl_1
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: square_block
+      x: -300
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-5
+      shapeId: square_block
+      x: 300
+      y: 0
+      angle: 0
+      baseLayer: 1
+  - id: tpl_2
+    map:
+    - id: board-shape-1
+      shapeId: cross_stack
+      x: 0
+      y: -80
+      angle: 0
+      baseLayer: 3
+    - id: board-shape-2
+      shapeId: square_block
+      x: -250
+      y: 80
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: square_block
+      x: 250
+      y: 80
+      angle: 0
+      baseLayer: 1
+  - id: tpl_3
+    map:
+    - id: board-shape-1
+      shapeId: v_formation
+      x: 0
+      y: -200
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 0
+      y: 200
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: diamond_ring
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 3
+  - id: tpl_4
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: -80
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: 0
+      y: -80
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: simple_pyramid
+      x: -320
+      y: 220
+      angle: 0
+      baseLayer: 3
+    - id: board-shape-4
+      shapeId: simple_pyramid
+      x: 320
+      y: 220
+      angle: 0
+      baseLayer: 4
+  - id: tpl_5
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: 100
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: -250
+      y: -100
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: cross_stack
+      x: 250
+      y: -100
+      angle: 0
+      baseLayer: 1
+  - id: tpl_6
+    map:
+    - id: board-shape-1
+      shapeId: simple_pyramid
+      x: 0
+      y: -280
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: simple_pyramid
+      x: 0
+      y: 280
+      angle: 180
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: square_block
+      x: -250
+      y: 0
+      angle: 90
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: square_block
+      x: 250
+      y: 0
+      angle: -90
+      baseLayer: 1
+  - id: tpl_7
+    map:
+    - id: board-shape-1
+      shapeId: v_formation
+      x: 0
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: v_formation
+      x: 0
+      y: 150
+      angle: 0
+      baseLayer: 3
+  - id: tpl_8
+    map:
+    - id: board-shape-1
+      shapeId: cross_stack
+      x: -240
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: 240
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: diamond_ring
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 2
+  - id: tpl_9
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 0
+      y: -220
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: v_formation
+      x: 0
+      y: 220
+      angle: 180
+      baseLayer: 2
+    - id: board-shape-4
+      shapeId: v_formation
+      x: -240
+      y: 0
+      angle: 270
+      baseLayer: 2
+    - id: board-shape-5
+      shapeId: v_formation
+      x: 240
+      y: 0
+      angle: 90
+      baseLayer: 2
+  - id: tpl_10
+    map:
+    - id: board-shape-1
+      shapeId: square_block
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 3
+    - id: board-shape-2
+      shapeId: square_block
+      x: 0
+      y: -200
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: square_block
+      x: 0
+      y: 200
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: square_block
+      x: -200
+      y: 0
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-5
+      shapeId: square_block
+      x: 200
+      y: 0
+      angle: 0
+      baseLayer: 2
+  - id: tpl_11
+    map:
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-1
+      shapeId: simple_pyramid
+      x: -250
+      y: 100
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: simple_pyramid
+      x: 250
+      y: 100
+      angle: 0
+      baseLayer: 2
+  - id: tpl_12
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: -150
+      y: -50
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: diamond_ring
+      x: 150
+      y: 150
+      angle: 0
+      baseLayer: 2
+  - id: tpl_13
+    map:
+    - id: board-shape-1
+      shapeId: v_formation
+      x: -150
+      y: -100
+      angle: 45
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 150
+      y: -100
+      angle: -45
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: v_formation
+      x: 0
+      y: 100
+      angle: 180
+      baseLayer: 2
+    - id: board-shape-4
+      shapeId: square_block
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 3
+  - id: tpl_14
+    map:
+    - id: board-shape-1
+      shapeId: cross_stack
+      x: 0
+      y: -200
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: cross_stack
+      x: 0
+      y: 200
+      angle: 0
+      baseLayer: 3
+  - id: tpl_15
+    map:
+    - id: board-shape-1
+      shapeId: simple_pyramid
+      x: 0
+      y: -300
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: simple_pyramid
+      x: 330
+      y: 0
+      angle: 90
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: simple_pyramid
+      x: 0
+      y: 300
+      angle: 180
+      baseLayer: 3
+    - id: board-shape-4
+      shapeId: simple_pyramid
+      x: -330
+      y: 0
+      angle: 270
+      baseLayer: 4
+  - id: tpl_16
+    map:
+    - id: board-shape-1
+      shapeId: square_block
+      x: -150
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: square_block
+      x: 150
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: square_block
+      x: -150
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: square_block
+      x: 150
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-5
+      shapeId: cross_stack
+      x: 0
+      y: 0
+      angle: 45
+      baseLayer: 2
+  - id: tpl_17
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: -250
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: diamond_ring
+      x: 250
+      y: 0
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: diamond_ring
+      x: 0
+      y: 200
+      angle: 0
+      baseLayer: 1
+  - id: tpl_18
+    map:
+    - id: board-shape-1
+      shapeId: v_formation
+      x: -100
+      y: 100
+      angle: 90
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 100
+      y: 100
+      angle: -90
+      baseLayer: 2
+    - id: board-shape-3
+      shapeId: v_formation
+      x: -200
+      y: -100
+      angle: 90
+      baseLayer: 3
+    - id: board-shape-4
+      shapeId: v_formation
+      x: 200
+      y: -100
+      angle: -90
+      baseLayer: 4
+  - id: tpl_19
+    map:
+    - id: board-shape-1
+      shapeId: simple_pyramid
+      x: 0
+      y: -50
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: simple_pyramid
+      x: -200
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: simple_pyramid
+      x: 200
+      y: 80
+      angle: 0
+      baseLayer: 1
+  - id: tpl_20
+    map:
+    - id: board-shape-1
+      shapeId: cross_stack
+      x: -150
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: 150
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: square_block
+      x: 150
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: square_block
+      x: -150
+      y: 150
+      angle: 0
+      baseLayer: 1
+  - id: tpl_21
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: -50
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: diamond_ring
+      x: -200
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: diamond_ring
+      x: 200
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: simple_pyramid
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 2
+  - id: tpl_22
+    map:
+    - id: board-shape-1
+      shapeId: v_formation
+      x: -50
+      y: -250
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: v_formation
+      x: 50
+      y: -250
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: v_formation
+      x: -50
+      y: 250
+      angle: 180
+      baseLayer: 2
+    - id: board-shape-4
+      shapeId: v_formation
+      x: 50
+      y: 250
+      angle: 180
+      baseLayer: 2
+  - id: tpl_23
+    map:
+    - id: board-shape-1
+      shapeId: square_block
+      x: 0
+      y: 0
+      angle: 45
+      baseLayer: 3
+    - id: board-shape-2
+      shapeId: diamond_ring
+      x: -250
+      y: 200
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: diamond_ring
+      x: 250
+      y: -200
+      angle: 0
+      baseLayer: 1
+  - id: tpl_24
+    map:
+    - id: board-shape-1
+      shapeId: cross_stack
+      x: -250
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-2
+      shapeId: cross_stack
+      x: -250
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-3
+      shapeId: cross_stack
+      x: 250
+      y: -150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-4
+      shapeId: cross_stack
+      x: 250
+      y: 150
+      angle: 0
+      baseLayer: 1
+    - id: board-shape-5
+      shapeId: simple_pyramid
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 2
+  - id: map_6d47ed
+    map:
+    - id: board-shape-1
+      shapeId: diamond_ring
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 0
+    - id: board-shape-2
+      shapeId: square_block
+      x: 0
+      y: 0
+      angle: 0
+      baseLayer: 1
+  shapePrefab: {fileID: 6101201248547407646, guid: 83eb7e68353a9614bafe72b2488b61a7, type: 3}
+  positionMultiplier: 100
+  invertY: 1
+  invertAngle: 1
+  autoCenterOnSave: 1
