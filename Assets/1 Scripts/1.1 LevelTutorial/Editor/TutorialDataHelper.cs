@@ -27,18 +27,10 @@ namespace UnityEditor
             if (tool.drawPileObj != null)
             {
                 if (level.drawPileData != null)
-                    tool.drawPileObj.LoadData(level.drawPileData, tool.cardPrefab, tool.positionMultiplier);
-                
-                // Initialize SpriteData for children
-                if (tool.cardSpriteData != null)
                 {
-                    CardGizmo[] pileGizmos = tool.drawPileObj.GetComponentsInChildren<CardGizmo>();
-                    foreach (var g in pileGizmos)
-                    {
-                        g.spriteData = tool.cardSpriteData;
-                        g.UpdateVisuals();
-                    }
+                    tool.drawPileObj.LoadData(level.drawPileData, tool.cardPrefab, tool.positionMultiplier);
                 }
+                tool.drawPileObj.RefreshVisuals(tool.cardPrefab, tool.positionMultiplier, tool.cardSpriteData);
             }
         }
 
