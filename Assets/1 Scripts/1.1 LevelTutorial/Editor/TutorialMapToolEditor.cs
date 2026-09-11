@@ -5,7 +5,6 @@ using System.IO;
 [CustomEditor(typeof(TutorialMapTool))]
 public class TutorialMapToolEditor : Editor
 {
-    private TutorialLevelData[] loadedLevels;
     private Vector2 scrollPos;
 
     [System.Serializable]
@@ -65,14 +64,14 @@ public class TutorialMapToolEditor : Editor
             LoadJSONs(tool);
         }
 
-        if (loadedLevels != null && loadedLevels.Length > 0)
+        if (tool.loadedLevels != null && tool.loadedLevels.Length > 0)
         {
             GUILayout.Space(10);
-            EditorGUILayout.LabelField($"Loaded {loadedLevels.Length} Tutorial Levels:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Loaded {tool.loadedLevels.Length} Tutorial Levels:", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(300));
-            foreach (var level in loadedLevels)
+            foreach (var level in tool.loadedLevels)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label($"Level ID: {level.id} ({level.difficulty})", GUILayout.Width(180));
@@ -100,9 +99,10 @@ public class TutorialMapToolEditor : Editor
         string json = File.ReadAllText(tool.jsonPath);
         string wrappedJson = "{\"Items\":" + json + "}";
         ArrayWrapper<TutorialLevelData> wrapper = JsonUtility.FromJson<ArrayWrapper<TutorialLevelData>>(wrappedJson);
-        loadedLevels = wrapper != null ? wrapper.Items : new TutorialLevelData[0];
+        tool.loadedLevels = wrapper != null ? wrapper.Items : new TutorialLevelData[0];
 
-        Debug.Log($"Loaded {loadedLevels.Length} tutorial levels.");
+        EditorUtility.SetDirty(tool);
+        Debug.Log($"Loaded {tool.loadedLevels.Length} tutorial levels.");
     }
 
     private void GenerateLevelInScene(TutorialMapTool tool, TutorialLevelData level)

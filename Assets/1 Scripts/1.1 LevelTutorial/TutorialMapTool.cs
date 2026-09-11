@@ -63,6 +63,9 @@ public class TutorialMapTool : MonoBehaviour
     [Header("Config Files")]
     public string jsonPath = "";
 
+    [HideInInspector]
+    public TutorialLevelData[] loadedLevels;
+
     [Header("References")]
     public GameObject cardPrefab; 
     public CardSpriteData cardSpriteData;
