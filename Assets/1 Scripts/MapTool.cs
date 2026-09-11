@@ -1,11 +1,32 @@
 ﻿using UnityEngine;
 
+[System.Serializable]
+public class MapSlotData
+{
+    public string id;
+    public string shapeId;
+    public float x;
+    public float y;
+    public float angle;
+    public int baseLayer;
+}
+
+[System.Serializable]
+public class MapObject
+{
+    public string id;
+    public MapSlotData[] map;
+}
+
 [RequireComponent(typeof(MapTemplate))]
 public class MapTool : MonoBehaviour
 {
     [Header("Config Paths")]
     public string mapsJsonPath = "D:/PurusGame/solitaire-classic/assets/preload/jsons/mapTemplates.json";
     
+    [HideInInspector]
+    public MapObject[] loadedMaps;
+
     [Header("References")]
     public GameObject shapePrefab;
 

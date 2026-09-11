@@ -7,7 +7,6 @@ using System.Linq;
 [CustomEditor(typeof(MapTool))]
 public class MapToolEditor : Editor
 {
-    private PixiExportTool.MapObject[] loadedMaps;
 
     private Vector2 scrollPos;
     [System.Serializable]
@@ -68,14 +67,14 @@ public class MapToolEditor : Editor
             LoadJSONs(tool);
         }
 
-        if (loadedMaps != null && loadedMaps.Length > 0)
+        if (tool.loadedMaps != null && tool.loadedMaps.Length > 0)
         {
             GUILayout.Space(10);
-            EditorGUILayout.LabelField($"Loaded {loadedMaps.Length} Map Templates:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Loaded {tool.loadedMaps.Length} Map Templates:", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(250));
-            foreach (var map in loadedMaps)
+            foreach (var map in tool.loadedMaps)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(map.id, GUILayout.Width(150));
@@ -90,9 +89,9 @@ public class MapToolEditor : Editor
                 {
                     if (EditorUtility.DisplayDialog("Delete Map", $"Are you sure you want to delete map '{map.id}'?", "Yes", "No"))
                     {
-                        var list = loadedMaps.ToList();
+                        var list = tool.loadedMaps.ToList();
                         list.Remove(map);
-                        loadedMaps = list.ToArray();
+                        tool.loadedMaps = list.ToArray();
                         SaveJSONs(tool);
                         GUIUtility.ExitGUI();
                     }
@@ -158,10 +157,12 @@ public class MapToolEditor : Editor
         // Load Maps
         string mapsJson = File.ReadAllText(tool.mapsJsonPath);
         string wrappedMapsJson = "{\"Items\":" + mapsJson + "}";
-        ArrayWrapper<PixiExportTool.MapObject> mapWrapper = JsonUtility.FromJson<ArrayWrapper<PixiExportTool.MapObject>>(wrappedMapsJson);
-        loadedMaps = mapWrapper != null ? mapWrapper.Items : new PixiExportTool.MapObject[0];
+        ArrayWrapper<MapObject> mapWrapper = JsonUtility.FromJson<ArrayWrapper<MapObject>>(wrappedMapsJson);
+        tool.loadedMaps = mapWrapper != null ? mapWrapper.Items : new MapObject[0];
 
-        Debug.Log($"Loaded {loadedMaps.Length} maps.");
+        EditorUtility.SetDirty(tool);
+
+        Debug.Log($"Loaded {tool.loadedMaps.Length} maps.");
     }
 
     private void CreateNewMap(MapTemplate curTemplate)
@@ -173,7 +174,7 @@ public class MapToolEditor : Editor
         Debug.Log($"Created empty map '{newMapId}'. You can now place Shape prefab instances inside it.");
     }
 
-    private void GenerateMapInScene(MapTool tool, MapTemplate curTemplate, PixiExportTool.MapObject mapData)
+    private void GenerateMapInScene(MapTool tool, MapTemplate curTemplate, MapObject mapData)
     {
         if (tool.shapePrefab == null)
         {
@@ -275,7 +276,7 @@ public class MapToolEditor : Editor
 
     private void SaveMapToJSON(MapTool tool, MapTemplate mt)
     {
-        if (loadedMaps == null)
+        if (tool.loadedMaps == null)
         {
             EditorUtility.DisplayDialog("Error", "Maps not loaded! Please load JSON first.", "OK");
             return;
@@ -286,20 +287,20 @@ public class MapToolEditor : Editor
             CenterMap(mt);
         }
 
-        PixiExportTool.MapObject existingMap = loadedMaps.FirstOrDefault(m => m.id == mt.templateId);
+        MapObject existingMap = tool.loadedMaps.FirstOrDefault(m => m.id == mt.templateId);
         if (existingMap == null)
         {
             if (EditorUtility.DisplayDialog("New Map", $"Map ID '{mt.templateId}' not found in JSON. Add as new?", "Yes", "No"))
             {
-                var list = loadedMaps.ToList();
-                existingMap = new PixiExportTool.MapObject { id = mt.templateId };
+                var list = tool.loadedMaps.ToList();
+                existingMap = new MapObject { id = mt.templateId };
                 list.Add(existingMap);
-                loadedMaps = list.ToArray();
+                tool.loadedMaps = list.ToArray();
             }
             else return;
         }
 
-        List<PixiExportTool.MapSlotData> mapSlots = new List<PixiExportTool.MapSlotData>();
+        List<MapSlotData> mapSlots = new List<MapSlotData>();
         ShapeTemplate[] shapes = mt.GetComponentsInChildren<ShapeTemplate>();
         
         int shapeCounter = 1;
@@ -309,7 +310,7 @@ public class MapToolEditor : Editor
             float angle = shape.transform.localEulerAngles.z;
             if (angle > 180) angle -= 360f;
 
-            mapSlots.Add(new PixiExportTool.MapSlotData()
+            mapSlots.Add(new MapSlotData()
             {
                 id = $"board-shape-{shapeCounter}",
                 shapeId = shape.shapeId,
@@ -331,7 +332,7 @@ public class MapToolEditor : Editor
 
     private void SaveJSONs(MapTool tool)
     {
-        string jsonArray = ToJsonArray(loadedMaps);
+        string jsonArray = ToJsonArray(tool.loadedMaps);
         File.WriteAllText(tool.mapsJsonPath, jsonArray);
     }
 
