@@ -13,34 +13,34 @@ MonoBehaviour:
   m_Name: CardSpriteData
   m_EditorClassIdentifier: 
   redRanks:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 21300000, guid: 462bdb5baed954f12b116cc21b6ebc73, type: 3}
+  - {fileID: 21300000, guid: 42cb09807f2d640ac8370b492d7111ce, type: 3}
+  - {fileID: 21300000, guid: 408c96f71149a47acbc84b92e94452a2, type: 3}
+  - {fileID: 21300000, guid: d114ddb80552441c3b2af2126cc6c7dd, type: 3}
+  - {fileID: 21300000, guid: 341f725cef3564604be9a50548e606e7, type: 3}
+  - {fileID: 21300000, guid: bca6986d27c734a75a588100b181cb77, type: 3}
+  - {fileID: 21300000, guid: f6896acd4408b4b5fa4b737f208a835f, type: 3}
+  - {fileID: 21300000, guid: 5374af4685aea49dd8791bef01570224, type: 3}
+  - {fileID: 21300000, guid: a9e2520e541eb40b4bee482566b274f7, type: 3}
+  - {fileID: 21300000, guid: e7d2066a7e8c04abd841a8e6e59435c8, type: 3}
+  - {fileID: 21300000, guid: d7ba6b8bea8054fd18505ce20f13f080, type: 3}
+  - {fileID: 21300000, guid: effae4108ca3f4beeb34aed86628c6af, type: 3}
+  - {fileID: 21300000, guid: 817596531efbe449b8886e7292e9b70b, type: 3}
   blackRanks:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  heartSprite: {fileID: 0}
-  diamondSprite: {fileID: 0}
-  clubSprite: {fileID: 0}
-  spadeSprite: {fileID: 0}
+  - {fileID: 21300000, guid: 14d0f41c89a0b4c7084ba0a8e1a507ef, type: 3}
+  - {fileID: 21300000, guid: c22f47d2f68764936bd916ea220d82e2, type: 3}
+  - {fileID: 21300000, guid: 5f78771f9bd9f4b19a0d60437286fc8f, type: 3}
+  - {fileID: 21300000, guid: f280ee6a1c7e6409b82149ef7bd5d33b, type: 3}
+  - {fileID: 21300000, guid: bc06fb9116fe24fbcb9fe9a9c4b0c25a, type: 3}
+  - {fileID: 21300000, guid: 10a6ef6591f754fea8ef11925f7b2b4c, type: 3}
+  - {fileID: 21300000, guid: 32eeb58200a9a4ebeb2817623437cfa2, type: 3}
+  - {fileID: 21300000, guid: 521c4e8f919d94b2eafe6dcd80029765, type: 3}
+  - {fileID: 21300000, guid: 0c16b4595f8204ab39c7930469e4a9fb, type: 3}
+  - {fileID: 21300000, guid: 198e96837a5b54390bed180e2807eefe, type: 3}
+  - {fileID: 21300000, guid: f4f8ea472f3e54a1ebaf36ba6877b0fc, type: 3}
+  - {fileID: 21300000, guid: 47c4048b8f92b43b7b6ec760f0da1f60, type: 3}
+  - {fileID: 21300000, guid: 69c8fc17953bd4a799ceaf7cead52e8f, type: 3}
+  heartSprite: {fileID: 21300000, guid: 5ee369aa9ad7a44d18afaec6d8c16a1b, type: 3}
+  diamondSprite: {fileID: 21300000, guid: ed90c5826343348a69d015a963c6c474, type: 3}
+  clubSprite: {fileID: 21300000, guid: a67ce7bb996ae438cbee0a69132a77f2, type: 3}
+  spadeSprite: {fileID: 21300000, guid: c594a7724f2744947a11917b0ce294fe, type: 3}
