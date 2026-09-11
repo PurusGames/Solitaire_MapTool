@@ -42,14 +42,14 @@ public class ShapeTemplate : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-#if UNITY_EDITOR
-        GUIStyle style = new GUIStyle();
-        style.normal.textColor = Color.yellow;
-        style.alignment = TextAnchor.MiddleCenter;
-        style.fontSize = 14;
-        UnityEditor.Handles.Label(transform.position + Vector3.up * 1f, "ShapeBaseL:" + baseLayer, style);
-#endif
-    }
+//     private void OnDrawGizmos()
+//     {
+// #if UNITY_EDITOR
+//         GUIStyle style = new GUIStyle();
+//         style.normal.textColor = Color.yellow;
+//         style.alignment = TextAnchor.MiddleCenter;
+//         style.fontSize = 14;
+//         UnityEditor.Handles.Label(transform.position + Vector3.up * 1f, "ShapeBaseL:" + baseLayer, style);
+// #endif
+//     }
 }

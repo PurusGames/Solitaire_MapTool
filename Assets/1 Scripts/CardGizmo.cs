@@ -46,42 +46,42 @@ public class CardGizmo : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        if (_spriteRenderer == null)
-        {
-            _spriteRenderer = GetComponent<SpriteRenderer>();
-        }
-        
-        int totalLayer = layer;
-        ShapeTemplate parentShape = GetComponentInParent<ShapeTemplate>();
-        if (parentShape != null)
-        {
-            totalLayer += parentShape.baseLayer;
-        }
-
-        if (_spriteRenderer != null)
-        {
-            _spriteRenderer.sortingOrder = totalLayer;
-        }
-
-        if (_spriteRenderer == null || _spriteRenderer.sprite == null) return;
-
-        Vector2 spriteSize = _spriteRenderer.sprite.bounds.size;
-        Vector2 scaledSize = spriteSize * collisionScale;
-
-        Gizmos.color = gizmoColor;
-        Matrix4x4 oldMatrix = Gizmos.matrix;
-        Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.DrawWireCube(Vector3.zero, scaledSize);
-        Gizmos.matrix = oldMatrix;
-        
-#if UNITY_EDITOR
-        GUIStyle style = new GUIStyle();
-        style.normal.textColor = Color.white;
-        style.alignment = TextAnchor.MiddleCenter;
-        style.fontSize = 12;
-        UnityEditor.Handles.Label(transform.position, "L:" + totalLayer, style);
-#endif
-    }
+//     private void OnDrawGizmos()
+//     {
+//         if (_spriteRenderer == null)
+//         {
+//             _spriteRenderer = GetComponent<SpriteRenderer>();
+//         }
+//         
+//         int totalLayer = layer;
+//         ShapeTemplate parentShape = GetComponentInParent<ShapeTemplate>();
+//         if (parentShape != null)
+//         {
+//             totalLayer += parentShape.baseLayer;
+//         }
+//
+//         if (_spriteRenderer != null)
+//         {
+//             _spriteRenderer.sortingOrder = totalLayer;
+//         }
+//
+//         if (_spriteRenderer == null || _spriteRenderer.sprite == null) return;
+//
+//         Vector2 spriteSize = _spriteRenderer.sprite.bounds.size;
+//         Vector2 scaledSize = spriteSize * collisionScale;
+//
+//         Gizmos.color = gizmoColor;
+//         Matrix4x4 oldMatrix = Gizmos.matrix;
+//         Gizmos.matrix = transform.localToWorldMatrix;
+//         Gizmos.DrawWireCube(Vector3.zero, scaledSize);
+//         Gizmos.matrix = oldMatrix;
+//         
+// #if UNITY_EDITOR
+//         GUIStyle style = new GUIStyle();
+//         style.normal.textColor = Color.white;
+//         style.alignment = TextAnchor.MiddleCenter;
+//         style.fontSize = 12;
+//         UnityEditor.Handles.Label(transform.position, "L:" + totalLayer, style);
+// #endif
+//     }
 }
