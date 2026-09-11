@@ -10,8 +10,6 @@ public class MapToolEditor : Editor
     private PixiExportTool.MapObject[] loadedMaps;
 
     private Vector2 scrollPos;
-    private string newMapId = "new_map_id";
-
     [System.Serializable]
     private class ArrayWrapper<T>
     {
@@ -109,13 +107,10 @@ public class MapToolEditor : Editor
             EditorGUILayout.LabelField("Current Scene Map Actions:", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginVertical("helpbox");
-            GUILayout.BeginHorizontal();
-            newMapId = EditorGUILayout.TextField("", newMapId, GUILayout.Width(150));
-            if (GUILayout.Button("Create New Empty Map"))
+            if (GUILayout.Button("Create New Empty Map", GUILayout.Height(30)))
             {
                 CreateNewMap(mapTpl);
             }
-            GUILayout.EndHorizontal();
             
             GUILayout.Space(5);
             GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
@@ -171,6 +166,7 @@ public class MapToolEditor : Editor
 
     private void CreateNewMap(MapTemplate curTemplate)
     {
+        string newMapId = "tpl_" + System.Guid.NewGuid().ToString("N").Substring(0, 6);
         curTemplate.templateId = newMapId;
         ClearChildren(curTemplate.transform);
         SceneView.RepaintAll();

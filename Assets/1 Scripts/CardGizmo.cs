@@ -44,6 +44,20 @@ public class CardGizmo : MonoBehaviour
             _lastLayer = layer;
             _lastZ = transform.localPosition.z;
         }
+
+        // Auto-generate name based on sibling index to avoid manual renaming
+        if (transform.parent != null)
+        {
+            string expectedName = "card_" + transform.GetSiblingIndex();
+            if (gameObject.name != expectedName && !gameObject.name.EndsWith("(Clone)"))
+            {
+                gameObject.name = expectedName;
+            }
+            else if (gameObject.name.Contains("(Clone)"))
+            {
+                gameObject.name = "card_" + transform.GetSiblingIndex();
+            }
+        }
     }
 
 //     private void OnDrawGizmos()
