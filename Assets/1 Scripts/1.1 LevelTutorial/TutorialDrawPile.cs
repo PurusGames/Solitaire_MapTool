@@ -5,61 +5,65 @@ public class TutorialDrawPile : MonoBehaviour
 {
     public int count = 10;
     public float cardSpacing = 20f;
+    public List<TutorialFixedCard> fixedCards = new List<TutorialFixedCard>();
 
     public void LoadData(TutorialDrawPileData data, GameObject cardPrefab, float positionMultiplier)
     {
         count = data.count;
-        
-        for (int i = transform.childCount - 1; i >= 0; i--)
+        fixedCards = new List<TutorialFixedCard>();
+        if (data.fixedCards != null)
         {
-            DestroyImmediate(transform.GetChild(i).gameObject);
-        }
-
-        if (data.fixedCards != null && cardPrefab != null)
-        {
-            for (int i = 0; i < data.fixedCards.Count; i++)
+            foreach(var c in data.fixedCards) 
             {
-                var fCard = data.fixedCards[i];
-                GameObject go = Instantiate(cardPrefab, transform);
-                go.name = fCard.id;
-
-                float xOffset = -(i * cardSpacing) / positionMultiplier;
-                go.transform.localPosition = new Vector3(xOffset, 0, -i);
-                
-                CardGizmo gizmo = go.GetComponent<CardGizmo>();
-                if (gizmo != null)
-                {
-                    gizmo.type = fCard.type;
-                    gizmo.suit = TutorialCheckCard.ParseSuit(fCard.suit);
-                    gizmo.rank = (CardRank)Mathf.Clamp(fCard.rank - 1, 0, 12);
-                    gizmo.layer = i;
-                    gizmo.showFaceDetails = true;
-                    gizmo.UpdateVisuals();
-                    gizmo.UpdateSorting();
-                }
+               fixedCards.Add(new TutorialFixedCard { id = c.id, type = string.IsNullOrEmpty(c.type) ? "normal" : c.type, suit = c.suit, rank = c.rank });
             }
         }
     }
 
     public TutorialDrawPileData SaveData()
     {
-        TutorialDrawPileData data = new TutorialDrawPileData();
-        data.count = count;
-        data.fixedCards = new List<TutorialFixedCard>();
-
-        CardGizmo[] gizmos = GetComponentsInChildren<CardGizmo>();
-        for (int i = 0; i < gizmos.Length; i++)
+        for (int i = 0; i < fixedCards.Count; i++)
         {
-            var gizmo = gizmos[i];
-            data.fixedCards.Add(new TutorialFixedCard()
-            {
-                id = $"draw-{i}",
-                type = string.IsNullOrEmpty(gizmo.type) ? "normal" : gizmo.type,
-                suit = gizmo.suit.ToString().ToLower(),
-                rank = (int)gizmo.rank + 1
-            });
+            fixedCards[i].id = $"draw-{i}";
         }
         
-        return data;
+        return new TutorialDrawPileData()
+        {
+            count = count,
+            fixedCards = new List<TutorialFixedCard>(fixedCards)
+        };
+    }
+
+    public void RefreshVisuals(GameObject cardPrefab, float positionMultiplier, CardSpriteData spriteData)
+    {
+        if (cardPrefab == null) return;
+        
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            DestroyImmediate(transform.GetChild(i).gameObject);
+        }
+
+        for (int i = 0; i < fixedCards.Count; i++)
+        {
+            var fCard = fixedCards[i];
+            GameObject go = Instantiate(cardPrefab, transform);
+            go.name = $"draw-{i}";
+
+            float xOffset = -(i * cardSpacing) / positionMultiplier;
+            go.transform.localPosition = new Vector3(xOffset, 0, i);
+            
+            CardGizmo gizmo = go.GetComponent<CardGizmo>();
+            if (gizmo != null)
+            {
+                gizmo.type = fCard.type;
+                gizmo.suit = TutorialCheckCard.ParseSuit(fCard.suit);
+                gizmo.rank = (CardRank)Mathf.Clamp(fCard.rank - 1, 0, 12);
+                gizmo.layer = -i;
+                gizmo.showFaceDetails = true;
+                if (spriteData != null) gizmo.spriteData = spriteData;
+                gizmo.UpdateVisuals();
+                gizmo.UpdateSorting();
+            }
+        }
     }
 }
