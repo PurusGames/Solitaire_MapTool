@@ -71,6 +71,11 @@ public class TutorialMapTool : MonoBehaviour
     public CardSpriteData cardSpriteData;
     
     [Header("Generation Settings")]
+    [Header("Current Target")]
+    [Tooltip("Leave empty to auto-increment max ID")]
+    public string targetLevelId = "";
+
+    [Header("Generation Settings")]
     public float positionMultiplier = 100f;
     public bool invertY = true;
     public bool invertAngle = true;
