@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 [System.Serializable]
 public class TutorialCardData
@@ -73,6 +74,7 @@ public class TutorialMapTool : MonoBehaviour
     [Header("Sub-tool References")]
     public TutorialCheckCard checkCardObj;
     public TutorialDrawPile drawPileObj;
+    public Text levelTextIndicator;
     
     [Header("Generation Settings")]
     [Header("Current Target")]
@@ -84,4 +86,43 @@ public class TutorialMapTool : MonoBehaviour
     public bool invertY = true;
     public bool invertAngle = true;
     public bool autoCenterOnSave = true;
+
+
+    private void OnValidate()
+    {
+        UpdateLevelText();
+    }
+
+    public void UpdateLevelText()
+    {
+        if (levelTextIndicator != null)
+        {
+            string levelStr = string.IsNullOrEmpty(targetLevelId) ? "NEW LEVEL" : targetLevelId;
+#if UNITY_EDITOR
+            if (levelTextIndicator.text != "Level: " + levelStr)
+            {
+                UnityEditor.Undo.RecordObject(levelTextIndicator, "Update Level Text");
+                levelTextIndicator.text = "Level: " + levelStr;
+                UnityEditor.EditorUtility.SetDirty(levelTextIndicator);
+            }
+#endif
+        }
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        string levelStr = string.IsNullOrEmpty(targetLevelId) ? "NEW LEVEL" : targetLevelId;
+        
+        if (levelTextIndicator == null)
+        {
+            GUIStyle style = new GUIStyle();
+            style.normal.textColor = Color.yellow;
+            style.fontSize = 30;
+            style.fontStyle = FontStyle.Bold;
+            style.alignment = TextAnchor.MiddleCenter;
+            UnityEditor.Handles.Label(transform.position + Vector3.up * 3f, "Level: " + levelStr, style);
+        }
+    }
+#endif
 }

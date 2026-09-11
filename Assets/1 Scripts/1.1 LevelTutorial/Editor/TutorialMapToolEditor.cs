@@ -95,6 +95,7 @@ public class TutorialMapToolEditor : Editor
         {
             ClearChildren(tool.transform);
             tool.targetLevelId = "";
+            tool.UpdateLevelText();
             EditorUtility.SetDirty(tool);
             SceneView.RepaintAll();
         }
@@ -254,6 +255,7 @@ public class TutorialMapToolEditor : Editor
             }
             targetId = maxId + 1;
             tool.targetLevelId = targetId.ToString();
+            tool.UpdateLevelText();
             EditorUtility.SetDirty(tool);
         }
         else
@@ -453,6 +455,7 @@ public class TutorialMapToolEditor : Editor
 
         Selection.activeGameObject = tool.gameObject;
         tool.targetLevelId = level.id.ToString();
+        tool.UpdateLevelText();
         EditorUtility.SetDirty(tool);
         Debug.Log($"Generated Tutorial Level {level.id} in scene.");
     }
