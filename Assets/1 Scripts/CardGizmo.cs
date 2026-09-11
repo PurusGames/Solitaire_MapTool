@@ -14,6 +14,8 @@ public class CardGizmo : MonoBehaviour
     public bool showFaceDetails = false;
     public CardSuit suit = CardSuit.Heart;
     public CardRank rank = CardRank.Ace;
+    public string type = "normal";
+    public string obstacle = "none";
 
     [Header("Visual References")]
     public SpriteRenderer rankRenderer;
