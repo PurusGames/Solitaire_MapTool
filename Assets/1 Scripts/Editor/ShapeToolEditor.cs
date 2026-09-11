@@ -7,7 +7,6 @@ using System.Linq;
 [CustomEditor(typeof(ShapeTool))]
 public class ShapeToolEditor : Editor
 {
-    private PixiExportTool.ShapesRoot loadedShapes;
 
     private Vector2 scrollPos;
     private string newShapeId = "new_shape_id";
@@ -64,14 +63,14 @@ public class ShapeToolEditor : Editor
             LoadJSON(tool);
         }
 
-        if (loadedShapes != null && loadedShapes.shapes != null && loadedShapes.shapes.Length > 0)
+        if (tool.loadedShapes != null && tool.loadedShapes.shapes != null && tool.loadedShapes.shapes.Length > 0)
         {
             GUILayout.Space(10);
-            EditorGUILayout.LabelField($"Loaded {loadedShapes.shapes.Length} Shapes:", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField($"Loaded {tool.loadedShapes.shapes.Length} Shapes:", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(250));
-            foreach (var shape in loadedShapes.shapes)
+            foreach (var shape in tool.loadedShapes.shapes)
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(shape.id, GUILayout.Width(150));
@@ -87,9 +86,9 @@ public class ShapeToolEditor : Editor
                 {
                     if (EditorUtility.DisplayDialog("Delete Shape", $"Are you sure you want to delete shape '{shape.id}'?", "Yes", "No"))
                     {
-                        var list = loadedShapes.shapes.ToList();
+                        var list = tool.loadedShapes.shapes.ToList();
                         list.Remove(shape);
-                        loadedShapes.shapes = list.ToArray();
+                        tool.loadedShapes.shapes = list.ToArray();
                         SaveJSON(tool);
                         GUIUtility.ExitGUI();
                     }
@@ -150,18 +149,19 @@ public class ShapeToolEditor : Editor
         }
 
         string shapesJson = File.ReadAllText(tool.shapesJsonPath);
-        loadedShapes = JsonUtility.FromJson<PixiExportTool.ShapesRoot>(shapesJson);
+        tool.loadedShapes = JsonUtility.FromJson<ShapesRoot>(shapesJson);
 
-        if (loadedShapes == null) 
+        if (tool.loadedShapes == null) 
         {
-            loadedShapes = new PixiExportTool.ShapesRoot { shapes = new PixiExportTool.ShapeObject[0] };
+            tool.loadedShapes = new ShapesRoot { shapes = new ShapeObject[0] };
         }
-        else if (loadedShapes.shapes == null)
+        else if (tool.loadedShapes.shapes == null)
         {
-            loadedShapes.shapes = new PixiExportTool.ShapeObject[0];
+            tool.loadedShapes.shapes = new ShapeObject[0];
         }
 
-        Debug.Log($"Loaded {loadedShapes.shapes.Length} shapes.");
+        EditorUtility.SetDirty(tool);
+        Debug.Log($"Loaded {tool.loadedShapes.shapes.Length} shapes.");
     }
 
     private void CreateNewShape(ShapeTemplate shapeTpl)
@@ -172,7 +172,7 @@ public class ShapeToolEditor : Editor
         Debug.Log($"Created empty shape '{newShapeId}'. You can now place Card prefab instances inside it.");
     }
 
-    private void GenerateShapeInScene(ShapeTool tool, ShapeTemplate shapeTpl, PixiExportTool.ShapeObject shapeData)
+    private void GenerateShapeInScene(ShapeTool tool, ShapeTemplate shapeTpl, ShapeObject shapeData)
     {
         if (tool.cardPrefab == null)
         {
@@ -216,26 +216,26 @@ public class ShapeToolEditor : Editor
 
     private void SaveShapeToJSON(ShapeTool tool, ShapeTemplate shapeTpl)
     {
-        if (loadedShapes == null || loadedShapes.shapes == null)
+        if (tool.loadedShapes == null || tool.loadedShapes.shapes == null)
         {
             EditorUtility.DisplayDialog("Error", "Shapes not loaded! Please load JSON first.", "OK");
             return;
         }
 
-        PixiExportTool.ShapeObject existingShape = loadedShapes.shapes.FirstOrDefault(s => s.id == shapeTpl.shapeId);
+        ShapeObject existingShape = tool.loadedShapes.shapes.FirstOrDefault(s => s.id == shapeTpl.shapeId);
         if (existingShape == null)
         {
             if (EditorUtility.DisplayDialog("New Shape", $"Shape ID '{shapeTpl.shapeId}' not found in JSON. Add as new?", "Yes", "No"))
             {
-                var list = loadedShapes.shapes.ToList();
-                existingShape = new PixiExportTool.ShapeObject { id = shapeTpl.shapeId };
+                var list = tool.loadedShapes.shapes.ToList();
+                existingShape = new ShapeObject { id = shapeTpl.shapeId };
                 list.Add(existingShape);
-                loadedShapes.shapes = list.ToArray();
+                tool.loadedShapes.shapes = list.ToArray();
             }
             else return;
         }
 
-        List<PixiExportTool.SlotData> slots = new List<PixiExportTool.SlotData>();
+        List<SlotData> slots = new List<SlotData>();
         CardGizmo[] cards = shapeTpl.GetComponentsInChildren<CardGizmo>();
         
         foreach (var card in cards)
@@ -244,7 +244,7 @@ public class ShapeToolEditor : Editor
             float angle = card.transform.localEulerAngles.z;
             if (angle > 180) angle -= 360f;
 
-            slots.Add(new PixiExportTool.SlotData()
+            slots.Add(new SlotData()
             {
                 x = Mathf.Round(localPos.x * tool.positionMultiplier * 100f) / 100f,
                 y = Mathf.Round((tool.invertY ? -localPos.y : localPos.y) * tool.positionMultiplier * 100f) / 100f,
@@ -263,7 +263,7 @@ public class ShapeToolEditor : Editor
 
     private void SaveJSON(ShapeTool tool)
     {
-        string json = JsonUtility.ToJson(loadedShapes, true);
+        string json = JsonUtility.ToJson(tool.loadedShapes, true);
         File.WriteAllText(tool.shapesJsonPath, json);
     }
 
@@ -279,7 +279,7 @@ public class ShapeToolEditor : Editor
         }
         
         string shapesJson = File.ReadAllText(tool.shapesJsonPath);
-        var loaded = JsonUtility.FromJson<PixiExportTool.ShapesRoot>(shapesJson);
+        var loaded = JsonUtility.FromJson<ShapesRoot>(shapesJson);
         if (loaded == null || loaded.shapes == null) return;
 
         var shapeData = loaded.shapes.FirstOrDefault(s => s.id == targetShapeId);
