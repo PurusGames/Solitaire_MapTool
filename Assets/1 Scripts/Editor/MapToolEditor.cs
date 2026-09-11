@@ -20,7 +20,46 @@ public class MapToolEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        DrawDefaultInspector();
+        serializedObject.Update();
+        SerializedProperty prop = serializedObject.GetIterator();
+        bool enterChildren = true;
+        while (prop.NextVisible(enterChildren))
+        {
+            enterChildren = false;
+            
+            if (prop.name == "m_Script")
+            {
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.PropertyField(prop, true);
+                }
+                continue;
+            }
+            
+            EditorGUILayout.PropertyField(prop, true);
+            
+            if (prop.name == "mapsJsonPath")
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("Browse...", GUILayout.Width(100)))
+                {
+                    string dir = "";
+                    if (!string.IsNullOrEmpty(prop.stringValue) && File.Exists(prop.stringValue))
+                        dir = Path.GetDirectoryName(prop.stringValue);
+                    
+                    string path = EditorUtility.OpenFilePanel("Select Maps JSON", dir, "json");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        prop.stringValue = path;
+                        GUI.FocusControl(null);
+                    }
+                }
+                GUILayout.EndHorizontal();
+                GUILayout.Space(2);
+            }
+        }
+        serializedObject.ApplyModifiedProperties();
         
         MapTool tool = (MapTool)target;
         MapTemplate mapTpl = tool.GetComponent<MapTemplate>();

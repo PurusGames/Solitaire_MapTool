@@ -58,8 +58,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23606a3c203b4fadb0268ec5cf183825, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapsJsonPath: D:/PurusGame/solitaire-classic/assets/preload/jsons/mapTemplates.json
+  mapsJsonPath: /Users/purus/Documents/Project/solitaire-classic/assets/preload/jsons/mapTemplates.json
   shapePrefab: {fileID: 6101201248547407646, guid: 83eb7e68353a9614bafe72b2488b61a7, type: 3}
   positionMultiplier: 100
   invertY: 1
   invertAngle: 1
+  autoCenterOnSave: 1
