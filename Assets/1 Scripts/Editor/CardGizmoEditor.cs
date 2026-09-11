@@ -11,6 +11,18 @@ public class CardGizmoEditor : Editor
         SerializedProperty layerProp = serializedObject.FindProperty("layer");
         SerializedProperty suitProp = serializedObject.FindProperty("suit");
         SerializedProperty rankProp = serializedObject.FindProperty("rank");
+        SerializedProperty showFaceProp = serializedObject.FindProperty("showFaceDetails");
+
+        GUILayout.Space(5);
+
+        // show/hide rank & suit
+        GUI.backgroundColor = showFaceProp.boolValue ? Color.green : Color.gray;
+        if (GUILayout.Button(showFaceProp.boolValue ? "Show Rank & Suit" : "Hide Rank & Suit", GUILayout.Height(30)))
+        {
+            showFaceProp.boolValue = !showFaceProp.boolValue;
+        }
+        // return bg color
+        GUI.backgroundColor = Color.white;
 
         GUILayout.Space(5);
 
@@ -27,6 +39,9 @@ public class CardGizmoEditor : Editor
         }
         GUILayout.EndHorizontal();
 
+        // Chỉ hiển thị các nút chọn Suit và Rank nếu đang bật chế độ Show Face (hoặc bạn có thể chọn luôn hiển thị)
+        // Dưới đây cho phép luôn hiển thị các nút bất kể trạng thái ẩn/hiện để dễ config trước.
+        
         // Suit Property with +/-
         DrawEnumProp("Suit", suitProp);
 

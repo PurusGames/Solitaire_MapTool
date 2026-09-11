@@ -11,6 +11,7 @@ public class CardGizmo : MonoBehaviour
 
     [Header("Card Visual Auto-Update")]
     public CardSpriteData spriteData;
+    public bool showFaceDetails = false;
     public CardSuit suit = CardSuit.Heart;
     public CardRank rank = CardRank.Ace;
 
@@ -32,6 +33,7 @@ public class CardGizmo : MonoBehaviour
     private CardSuit _lastSuit = (CardSuit)(-1);
     private CardRank _lastRank = (CardRank)(-1);
     private CardSpriteData _lastSpriteData;
+    private bool _lastShowFaceDetails = true;
 
     private void Update()
     {
@@ -86,25 +88,38 @@ public class CardGizmo : MonoBehaviour
         _lastSuit = (CardSuit)(-1);
         _lastRank = (CardRank)(-1);
         _lastSpriteData = null;
+        _lastShowFaceDetails = !showFaceDetails;
     }
 
     public void UpdateVisuals()
     {
         if (spriteData == null) return;
-        if (_lastSuit == suit && _lastRank == rank && _lastSpriteData == spriteData) return;
+        if (_lastSuit == suit && _lastRank == rank && _lastSpriteData == spriteData && _lastShowFaceDetails == showFaceDetails) return;
 
         _lastSuit = suit;
         _lastRank = rank;
         _lastSpriteData = spriteData;
+        _lastShowFaceDetails = showFaceDetails;
 
         if (rankRenderer != null)
         {
-            rankRenderer.sprite = spriteData.GetRankSprite(rank, suit);
+            rankRenderer.enabled = showFaceDetails;
+            if (showFaceDetails)
+            {
+                rankRenderer.sprite = spriteData.GetRankSprite(rank, suit);
+            }
         }
         
-        Sprite suitSprite = spriteData.GetSuitSprite(suit);
-        if (suitRenderer1 != null) suitRenderer1.sprite = suitSprite;
-        if (suitRenderer2 != null) suitRenderer2.sprite = suitSprite;
+        if (suitRenderer1 != null) 
+        {
+            suitRenderer1.enabled = showFaceDetails;
+            if (showFaceDetails) suitRenderer1.sprite = spriteData.GetSuitSprite(suit);
+        }
+        if (suitRenderer2 != null) 
+        {
+            suitRenderer2.enabled = showFaceDetails;
+            if (showFaceDetails) suitRenderer2.sprite = spriteData.GetSuitSprite(suit);
+        }
     }
     
     public void UpdateSorting()
@@ -125,10 +140,12 @@ public class CardGizmo : MonoBehaviour
         {
             totalLayer += parentShape.baseLayer;
         }
+
         if (_sortingGroup != null)
         {
             _sortingGroup.sortingOrder = totalLayer;
         }
+
         if (_spriteRenderer != null)
         {
             _spriteRenderer.sortingOrder = 0;
