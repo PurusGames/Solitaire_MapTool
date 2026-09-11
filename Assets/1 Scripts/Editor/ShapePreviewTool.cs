@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-public class ShapeEditorTool : EditorWindow
+public class ShapePreviewTool : EditorWindow
 {
     private string shapesPath = "D:/PurusGame/solitaire-classic/assets/preload/jsons/shapes.json";
     private GameObject cardPrefab;
@@ -12,13 +12,13 @@ public class ShapeEditorTool : EditorWindow
     private bool invertY = true;
     private bool invertAngle = true;
 
-    private PixiExportTool.ShapesRoot loadedData;
+    private ShapesRoot loadedData;
     private Vector2 scrollPos;
 
-    [MenuItem("Tools/Shape Editor")]
+    [MenuItem("Tools/Shape Preview")]
     public static void ShowWindow()
     {
-        GetWindow<ShapeEditorTool>("Shape Editor");
+        GetWindow<ShapePreviewTool>("Shape Preview");
     }
 
     private void OnEnable()
@@ -162,10 +162,10 @@ public class ShapeEditorTool : EditorWindow
             return;
         }
         string json = File.ReadAllText(shapesPath);
-        loadedData = JsonUtility.FromJson<PixiExportTool.ShapesRoot>(json);
+        loadedData = JsonUtility.FromJson<ShapesRoot>(json);
         if (loadedData == null || loadedData.shapes == null)
         {
-            loadedData = new PixiExportTool.ShapesRoot { shapes = new PixiExportTool.ShapeObject[0] };
+            loadedData = new ShapesRoot { shapes = new ShapeObject[0] };
         }
         Debug.Log("Loaded shapes from JSON.");
     }
@@ -186,7 +186,7 @@ public class ShapeEditorTool : EditorWindow
         Selection.activeGameObject = go;
     }
 
-    private void GenerateShapeInScene(PixiExportTool.ShapeObject shapeData)
+    private void GenerateShapeInScene(ShapeObject shapeData)
     {
         if (cardPrefab == null)
         {
@@ -241,12 +241,12 @@ public class ShapeEditorTool : EditorWindow
 
         // Update JSON data for each shape in scene
         bool changed = false;
-        var shapeList = (loadedData != null && loadedData.shapes != null) ? loadedData.shapes.ToList() : new List<PixiExportTool.ShapeObject>();
+        var shapeList = (loadedData != null && loadedData.shapes != null) ? loadedData.shapes.ToList() : new List<ShapeObject>();
 
         foreach (var st in templates)
         {
             if (st.transform.parent != null && st.transform.parent.GetComponent<MapTemplate>() != null) continue;
-            List<PixiExportTool.SlotData> slots = new List<PixiExportTool.SlotData>();
+            List<SlotData> slots = new List<SlotData>();
             CardGizmo[] cards = st.GetComponentsInChildren<CardGizmo>();
             foreach (var card in cards)
             {
@@ -254,7 +254,7 @@ public class ShapeEditorTool : EditorWindow
                 float angle = card.transform.localEulerAngles.z;
                 if (angle > 180) angle -= 360f;
 
-                slots.Add(new PixiExportTool.SlotData()
+                slots.Add(new SlotData()
                 {
                     x = Mathf.Round(localPos.x * positionMultiplier * 100f) / 100f,
                     y = Mathf.Round((invertY ? -localPos.y : localPos.y) * positionMultiplier * 100f) / 100f,
@@ -263,7 +263,7 @@ public class ShapeEditorTool : EditorWindow
                 });
             }
 
-            PixiExportTool.ShapeObject existingShape = shapeList.FirstOrDefault(x => x.id == st.shapeId);
+            ShapeObject existingShape = shapeList.FirstOrDefault(x => x.id == st.shapeId);
             if (existingShape != null)
             {
                 existingShape.slots = slots.ToArray();
@@ -272,7 +272,7 @@ public class ShapeEditorTool : EditorWindow
             }
             else
             {
-                shapeList.Add(new PixiExportTool.ShapeObject()
+                shapeList.Add(new ShapeObject()
                 {
                     id = st.shapeId,
                     slots = slots.ToArray()
@@ -284,13 +284,13 @@ public class ShapeEditorTool : EditorWindow
 
         if (changed)
         {
-            if (loadedData == null) loadedData = new PixiExportTool.ShapesRoot();
+            if (loadedData == null) loadedData = new ShapesRoot();
             loadedData.shapes = shapeList.ToArray();
             SaveJSON();
             EditorUtility.DisplayDialog("Success", "Saved shapes from scene to JSON.", "OK");
         }
     }
-        private void DrawShapePreview(Rect rect, PixiExportTool.ShapeObject shape)
+        private void DrawShapePreview(Rect rect, ShapeObject shape)
     {
         EditorGUI.DrawRect(rect, new Color(0.15f, 0.15f, 0.15f, 1f));
         if (shape.slots == null || shape.slots.Length == 0) return;
