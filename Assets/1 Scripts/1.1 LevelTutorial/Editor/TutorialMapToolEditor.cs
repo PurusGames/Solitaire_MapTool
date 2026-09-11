@@ -86,6 +86,186 @@ public class TutorialMapToolEditor : Editor
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
+
+        GUILayout.Space(15);
+        EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginVertical("helpbox");
+        
+        if (GUILayout.Button("Create Empty Canvas (Clear)", GUILayout.Height(30)))
+        {
+            ClearChildren(tool.transform);
+            tool.targetLevelId = "";
+            EditorUtility.SetDirty(tool);
+            SceneView.RepaintAll();
+        }
+        
+        GUILayout.Space(5);
+        GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
+        if (GUILayout.Button("Add New Card into Canvas", GUILayout.Height(30)))
+        {
+            AddNewCard(tool);
+        }
+        GUI.backgroundColor = Color.white;
+
+        GUILayout.Space(10);
+        GUI.backgroundColor = new Color(0.6f, 0.9f, 0.6f);
+        string btnText = string.IsNullOrEmpty(tool.targetLevelId) ? "Save To JSON (Auto-Increment ID)" : $"Save Overwrite ({tool.targetLevelId}) To JSON";
+        if (GUILayout.Button(btnText, GUILayout.Height(40)))
+        {
+            SaveTutorialMapToJSON(tool);
+        }
+        GUI.backgroundColor = Color.white;
+        EditorGUILayout.EndVertical();
+    }
+
+
+    private void ClearChildren(Transform t)
+    {
+        Undo.RegisterFullObjectHierarchyUndo(t.gameObject, "Clear Canvas");
+        for (int i = t.childCount - 1; i >= 0; i--)
+        {
+            Undo.DestroyObjectImmediate(t.GetChild(i).gameObject);
+        }
+    }
+
+    private void AddNewCard(TutorialMapTool tool)
+    {
+        if (tool.cardPrefab == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Missing Card Prefab in TutorialMapTool!", "OK");
+            return;
+        }
+
+        GameObject newCard = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
+        newCard.transform.SetParent(tool.transform, false);
+        newCard.name = "card_" + (tool.transform.childCount);
+        
+        CardGizmo gizmo = newCard.GetComponent<CardGizmo>();
+        if (gizmo != null)
+        {
+            if (tool.cardSpriteData != null) gizmo.spriteData = tool.cardSpriteData;
+            gizmo.showFaceDetails = true;
+            gizmo.UpdateVisuals();
+        }
+        
+        Selection.activeGameObject = newCard;
+        Undo.RegisterCreatedObjectUndo(newCard, "Add Card");
+    }
+
+    private void SaveTutorialMapToJSON(TutorialMapTool tool)
+    {
+        if (tool.loadedLevels == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Levels not loaded! Please load JSON first.", "OK");
+            return;
+        }
+
+        int targetId = 0;
+        if (string.IsNullOrEmpty(tool.targetLevelId))
+        {
+            int maxId = 0;
+            foreach (var l in tool.loadedLevels)
+            {
+                if (l.id > maxId) maxId = l.id;
+            }
+            targetId = maxId + 1;
+            tool.targetLevelId = targetId.ToString();
+            EditorUtility.SetDirty(tool);
+        }
+        else
+        {
+            if (!int.TryParse(tool.targetLevelId, out targetId))
+            {
+                EditorUtility.DisplayDialog("Error", "Target Level ID must be an integer.", "OK");
+                return;
+            }
+        }
+
+        // Find or create level
+        var levelList = new System.Collections.Generic.List<TutorialLevelData>(tool.loadedLevels);
+        TutorialLevelData existingLevel = levelList.Find(l => l.id == targetId);
+        
+        if (existingLevel == null)
+        {
+            if (EditorUtility.DisplayDialog("New Level", $"Level ID '{targetId}' not found in JSON. Add as new?", "Yes", "No"))
+            {
+                existingLevel = new TutorialLevelData 
+                { 
+                    id = targetId,
+                    type = "tutorial",
+                    mode = "classic",
+                    difficulty = "easy",
+                    tutorialConfig = new TutorialConfig { cards = new System.Collections.Generic.List<TutorialCardData>() },
+                    checkCardData = new TutorialCheckCardData { id = "check-0", type = "normal", suit = "spade", rank = 4 },
+                    drawPileData = new TutorialDrawPileData 
+                    { 
+                        count = 10,
+                        fixedCards = new System.Collections.Generic.List<TutorialFixedCard>()
+                    }
+                };
+                levelList.Add(existingLevel);
+                tool.loadedLevels = levelList.ToArray();
+            }
+            else return;
+        }
+        else
+        {
+            if (existingLevel.tutorialConfig == null) 
+            {
+                existingLevel.tutorialConfig = new TutorialConfig { cards = new System.Collections.Generic.List<TutorialCardData>() };
+            }
+        }
+
+        // Collect cards from scene
+        System.Collections.Generic.List<TutorialCardData> cards = new System.Collections.Generic.List<TutorialCardData>();
+        CardGizmo[] gizmos = tool.GetComponentsInChildren<CardGizmo>();
+        
+        int cardIdCounter = 1;
+        foreach (var gizmo in gizmos)
+        {
+            Vector3 localPos = tool.transform.InverseTransformPoint(gizmo.transform.position);
+            float angle = gizmo.transform.localEulerAngles.z;
+            if (angle > 180) angle -= 360f;
+
+            cards.Add(new TutorialCardData()
+            {
+                id = cardIdCounter,
+                type = string.IsNullOrEmpty(gizmo.type) ? "normal" : gizmo.type,
+                suit = gizmo.suit.ToString().ToLower(),
+                rank = (int)gizmo.rank + 1,
+                obstacle = string.IsNullOrEmpty(gizmo.obstacle) ? "none" : gizmo.obstacle,
+                x = Mathf.Round(localPos.x * tool.positionMultiplier * 100f) / 100f,
+                y = Mathf.Round((tool.invertY ? -localPos.y : localPos.y) * tool.positionMultiplier * 100f) / 100f,
+                angle = Mathf.Round((tool.invertAngle ? -angle : angle) * 100f) / 100f,
+                layer = gizmo.layer
+            });
+            cardIdCounter++;
+        }
+
+        existingLevel.tutorialConfig.cards = cards;
+
+        SaveJSONs(tool);
+        
+        Debug.Log($"Level '{targetId}' overridden & saved successfully with {cards.Count} cards!");
+        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!", "OK");
+    }
+
+    private void SaveJSONs(TutorialMapTool tool)
+    {
+        ArrayWrapper<TutorialLevelData> wrapper = new ArrayWrapper<TutorialLevelData> { Items = tool.loadedLevels };
+        string json = JsonUtility.ToJson(wrapper, true);
+        int start = json.IndexOf("[");
+        int end = json.LastIndexOf("]");
+        if (start != -1 && end != -1)
+        {
+            json = json.Substring(start, end - start + 1);
+        }
+        else
+        {
+            json = "[]";
+        }
+        File.WriteAllText(tool.jsonPath, json);
+        AssetDatabase.Refresh();
     }
 
     private void LoadJSONs(TutorialMapTool tool)
@@ -160,6 +340,8 @@ public class TutorialMapToolEditor : Editor
                 int rankIdx = cardData.rank - 1;
                 rankIdx = Mathf.Clamp(rankIdx, 0, 12);
                 gizmo.rank = (CardRank)rankIdx;
+                gizmo.type = cardData.type;
+                gizmo.obstacle = cardData.obstacle;
                 
                 if (tool.cardSpriteData != null)
                 {
@@ -173,6 +355,8 @@ public class TutorialMapToolEditor : Editor
         }
 
         Selection.activeGameObject = tool.gameObject;
+        tool.targetLevelId = level.id.ToString();
+        EditorUtility.SetDirty(tool);
         Debug.Log($"Generated Tutorial Level {level.id} in scene.");
     }
 
