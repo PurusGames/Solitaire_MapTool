@@ -70,6 +70,10 @@ public class TutorialMapTool : MonoBehaviour
     public GameObject cardPrefab; 
     public CardSpriteData cardSpriteData;
     
+    [Header("Sub-tool References")]
+    public TutorialCheckCard checkCardObj;
+    public TutorialDrawPile drawPileObj;
+    
     [Header("Generation Settings")]
     [Header("Current Target")]
     [Tooltip("Leave empty to auto-increment max ID")]

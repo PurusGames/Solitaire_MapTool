@@ -122,9 +122,25 @@ public class TutorialMapToolEditor : Editor
     private void ClearChildren(Transform t)
     {
         Undo.RegisterFullObjectHierarchyUndo(t.gameObject, "Clear Canvas");
+        TutorialMapTool tool = t.GetComponent<TutorialMapTool>();
+        
         for (int i = t.childCount - 1; i >= 0; i--)
         {
-            Undo.DestroyObjectImmediate(t.GetChild(i).gameObject);
+            GameObject childObj = t.GetChild(i).gameObject;
+            if (tool != null)
+            {
+                if (tool.checkCardObj != null && childObj == tool.checkCardObj.gameObject) continue;
+                if (tool.drawPileObj != null && childObj == tool.drawPileObj.gameObject) continue;
+            }
+            Undo.DestroyObjectImmediate(childObj);
+        }
+        
+        if (tool != null) 
+        {
+            var defaultLevel = new TutorialLevelData();
+            defaultLevel.checkCardData = new TutorialCheckCardData { id = "check-0", type = "normal", suit = "spade", rank = 4 };
+            defaultLevel.drawPileData = new TutorialDrawPileData { count = 10, fixedCards = new System.Collections.Generic.List<TutorialFixedCard>() };
+            UnityEditor.TutorialDataHelper.GenerateExtraObjects(tool, defaultLevel);
         }
     }
 
@@ -223,6 +239,12 @@ public class TutorialMapToolEditor : Editor
         int cardIdCounter = 1;
         foreach (var gizmo in gizmos)
         {
+            // Ignore if it's the check card
+            if (tool.checkCardObj != null && gizmo.gameObject == tool.checkCardObj.gameObject) continue;
+            // Ignore if it belongs to the draw pile
+            if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
+            // (Legacy support)
+            if (gizmo.GetComponent<TutorialCheckCard>() != null || gizmo.gameObject.name == "CheckCardData") continue;
             Vector3 localPos = tool.transform.InverseTransformPoint(gizmo.transform.position);
             float angle = gizmo.transform.localEulerAngles.z;
             if (angle > 180) angle -= 360f;
@@ -243,6 +265,8 @@ public class TutorialMapToolEditor : Editor
         }
 
         existingLevel.tutorialConfig.cards = cards;
+
+        UnityEditor.TutorialDataHelper.SaveExtraObjects(tool, existingLevel);
 
         SaveJSONs(tool);
         
@@ -301,7 +325,10 @@ public class TutorialMapToolEditor : Editor
 
         for (int i = tool.transform.childCount - 1; i >= 0; i--)
         {
-            Undo.DestroyObjectImmediate(tool.transform.GetChild(i).gameObject);
+            GameObject childObj = tool.transform.GetChild(i).gameObject;
+            if (tool.checkCardObj != null && childObj == tool.checkCardObj.gameObject) continue;
+            if (tool.drawPileObj != null && childObj == tool.drawPileObj.gameObject) continue;
+            Undo.DestroyObjectImmediate(childObj);
         }
 
         if (level.tutorialConfig == null || level.tutorialConfig.cards == null)
@@ -353,6 +380,8 @@ public class TutorialMapToolEditor : Editor
                 gizmo.UpdateSorting();
             }
         }
+
+        UnityEditor.TutorialDataHelper.GenerateExtraObjects(tool, level);
 
         Selection.activeGameObject = tool.gameObject;
         tool.targetLevelId = level.id.ToString();
