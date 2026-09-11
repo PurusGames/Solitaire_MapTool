@@ -107,6 +107,12 @@ public class TutorialMapToolEditor : Editor
         }
         GUI.backgroundColor = Color.white;
 
+        GUILayout.Space(5);
+        if (GUILayout.Button("Center Canvas to (0,0)"))
+        {
+            CenterMap(tool);
+        }
+
         GUILayout.Space(10);
         GUI.backgroundColor = new Color(0.6f, 0.9f, 0.6f);
         string btnText = string.IsNullOrEmpty(tool.targetLevelId) ? "Save To JSON (Auto-Increment ID)" : $"Save Overwrite ({tool.targetLevelId}) To JSON";
@@ -118,6 +124,63 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
+
+
+    private void CenterMap(TutorialMapTool tool)
+    {
+        CardGizmo[] allGizmos = tool.GetComponentsInChildren<CardGizmo>();
+        System.Collections.Generic.List<CardGizmo> canvasCards = new System.Collections.Generic.List<CardGizmo>();
+        
+        foreach (var gizmo in allGizmos)
+        {
+            if (tool.checkCardObj != null && gizmo.transform.IsChildOf(tool.checkCardObj.transform)) continue;
+            if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
+            if (gizmo.GetComponent<TutorialCheckCard>() != null || gizmo.gameObject.name == "CheckCardData") continue;
+
+            canvasCards.Add(gizmo);
+        }
+
+        if (canvasCards.Count == 0)
+        {
+            Debug.LogWarning("No cards found in canvas! Cannot determine map center.");
+            return;
+        }
+
+        Vector3 min = new Vector3(float.MaxValue, float.MaxValue, 0);
+        Vector3 max = new Vector3(float.MinValue, float.MinValue, 0);
+
+        foreach (var card in canvasCards)
+        {
+            Vector3 localPos = tool.transform.InverseTransformPoint(card.transform.position);
+            if (localPos.x < min.x) min.x = localPos.x;
+            if (localPos.x > max.x) max.x = localPos.x;
+            if (localPos.y < min.y) min.y = localPos.y;
+            if (localPos.y > max.y) max.y = localPos.y;
+        }
+
+        Vector3 center = (min + max) / 2f;
+
+        if (center.sqrMagnitude < 0.0001f)
+        {
+            Debug.Log("Map is already centered.");
+            return;
+        }
+
+        System.Collections.Generic.List<Transform> transformsToMove = new System.Collections.Generic.List<Transform>();
+        foreach (var card in canvasCards)
+        {
+            transformsToMove.Add(card.transform);
+        }
+        Undo.RecordObjects(transformsToMove.ToArray(), "Center Map");
+
+        foreach (var card in canvasCards)
+        {
+            card.transform.localPosition -= center;
+        }
+
+        Debug.Log($"Map centered! Applied offset: {-center}");
+        SceneView.RepaintAll();
+    }
 
     private void ClearChildren(Transform t)
     {
@@ -174,6 +237,11 @@ public class TutorialMapToolEditor : Editor
         {
             EditorUtility.DisplayDialog("Error", "Levels not loaded! Please load JSON first.", "OK");
             return;
+        }
+
+        if (tool.autoCenterOnSave)
+        {
+            CenterMap(tool);
         }
 
         int targetId = 0;
@@ -240,7 +308,7 @@ public class TutorialMapToolEditor : Editor
         foreach (var gizmo in gizmos)
         {
             // Ignore if it's the check card
-            if (tool.checkCardObj != null && gizmo.gameObject == tool.checkCardObj.gameObject) continue;
+            if (tool.checkCardObj != null && gizmo.transform.IsChildOf(tool.checkCardObj.transform)) continue;
             // Ignore if it belongs to the draw pile
             if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
             // (Legacy support)
