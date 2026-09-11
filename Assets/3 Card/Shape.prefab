@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22cd6c49c0a04b2b87a811bf0824ef40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  shapesJsonPath: D:/PurusGame/solitaire-classic/assets/preload/jsons/shapes.json
+  shapesJsonPath: /Users/purus/Documents/Project/solitaire-classic/assets/preload/jsons/shapes.json
   cardPrefab: {fileID: 8994729036240357855, guid: 87d34c18b75f6b34399c91c01f61abc1, type: 3}
   positionMultiplier: 100
   invertY: 1
