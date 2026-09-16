@@ -11,6 +11,8 @@ public class CardGizmoEditor : Editor
         SerializedProperty layerProp = serializedObject.FindProperty("layer");
         SerializedProperty suitProp = serializedObject.FindProperty("suit");
         SerializedProperty rankProp = serializedObject.FindProperty("rank");
+        SerializedProperty typeProp = serializedObject.FindProperty("type");
+        SerializedProperty obstacleProp = serializedObject.FindProperty("obstacle");
         SerializedProperty showFaceProp = serializedObject.FindProperty("showFaceDetails");
 
         GUILayout.Space(5);
@@ -48,6 +50,12 @@ public class CardGizmoEditor : Editor
         // Rank Property with +/-
         DrawEnumProp("Rank", rankProp);
 
+        // Type Property with +/-
+        DrawEnumProp("Type", typeProp);
+
+        // Obstacle Property with +/-
+        DrawEnumProp("Obstacle", obstacleProp);
+
         serializedObject.ApplyModifiedProperties();
 
         GUILayout.Space(10);
@@ -56,6 +64,8 @@ public class CardGizmoEditor : Editor
 
     private void DrawEnumProp(string label, SerializedProperty prop)
     {
+        if (prop == null) return;
+        
         GUILayout.BeginHorizontal("box");
         
         string displayValue = "Mixed...";
