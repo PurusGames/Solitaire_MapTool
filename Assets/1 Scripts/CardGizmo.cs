@@ -21,6 +21,7 @@ public class CardGizmo : MonoBehaviour
     public SpriteRenderer rankRenderer;
     public SpriteRenderer suitRenderer1;
     public SpriteRenderer suitRenderer2;
+    public GameObject backRenderer;
 
     [Header("Collision Settings")]
     public float collisionScale = 0.8f;
@@ -125,6 +126,11 @@ public class CardGizmo : MonoBehaviour
             suitRenderer2.enabled = showFaceDetails;
             if (showFaceDetails) suitRenderer2.sprite = spriteData.GetSuitSprite(suit);
         }
+
+        if (backRenderer != null)
+        {
+            backRenderer.SetActive(!showFaceDetails);
+        }
     }
     
     public void UpdateSorting()
@@ -142,5 +148,7 @@ public class CardGizmo : MonoBehaviour
         if (rankRenderer != null) rankRenderer.sortingOrder = 1;
         if (suitRenderer1 != null) suitRenderer1.sortingOrder = 1;
         if (suitRenderer2 != null) suitRenderer2.sortingOrder = 1;
+
+        if (backRenderer != null) backRenderer.GetComponent<SpriteRenderer>().sortingOrder = 1;
     }
 }
