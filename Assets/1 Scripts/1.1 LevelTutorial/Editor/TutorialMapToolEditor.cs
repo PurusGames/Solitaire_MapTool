@@ -322,10 +322,10 @@ public class TutorialMapToolEditor : Editor
             cards.Add(new TutorialCardData()
             {
                 id = cardIdCounter,
-                type = string.IsNullOrEmpty(gizmo.type) ? "normal" : gizmo.type,
+                type = CardGizmo.TypeToString(gizmo.type),
                 suit = gizmo.suit.ToString().ToLower(),
                 rank = (int)gizmo.rank + 1,
-                obstacle = string.IsNullOrEmpty(gizmo.obstacle) ? "none" : gizmo.obstacle,
+                obstacle = CardGizmo.ObstacleToString(gizmo.obstacle),
                 x = Mathf.Round(localPos.x * tool.positionMultiplier * 100f) / 100f,
                 y = Mathf.Round((tool.invertY ? -localPos.y : localPos.y) * tool.positionMultiplier * 100f) / 100f,
                 angle = Mathf.Round((tool.invertAngle ? -angle : angle) * 100f) / 100f,
@@ -437,8 +437,8 @@ public class TutorialMapToolEditor : Editor
                 int rankIdx = cardData.rank - 1;
                 rankIdx = Mathf.Clamp(rankIdx, 0, 12);
                 gizmo.rank = (CardRank)rankIdx;
-                gizmo.type = cardData.type;
-                gizmo.obstacle = cardData.obstacle;
+                gizmo.type = CardGizmo.ParseType(cardData.type);
+                gizmo.obstacle = CardGizmo.ParseObstacle(cardData.obstacle);
                 
                 if (tool.cardSpriteData != null)
                 {

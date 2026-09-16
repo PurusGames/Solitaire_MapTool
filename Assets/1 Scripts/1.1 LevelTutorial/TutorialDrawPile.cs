@@ -55,7 +55,7 @@ public class TutorialDrawPile : MonoBehaviour
             CardGizmo gizmo = go.GetComponent<CardGizmo>();
             if (gizmo != null)
             {
-                gizmo.type = fCard.type;
+                gizmo.type = CardGizmo.ParseType(fCard.type);
                 gizmo.suit = TutorialCheckCard.ParseSuit(fCard.suit);
                 gizmo.rank = (CardRank)Mathf.Clamp(fCard.rank - 1, 0, 12);
                 gizmo.layer = -i;

@@ -3,12 +3,12 @@ using UnityEngine;
 public class TutorialCheckCard : MonoBehaviour
 {
     public string id = "check-0";
-    public string type = "normal";
+    public CardType type = CardType.Normal;
 
         public void LoadData(TutorialCheckCardData data, GameObject cardPrefab)
     {
         id = data.id;
-        type = string.IsNullOrEmpty(data.type) ? "normal" : data.type;
+        type = CardGizmo.ParseType(data.type);
         
         if (transform.childCount == 0 && cardPrefab != null)
         {
@@ -22,6 +22,7 @@ public class TutorialCheckCard : MonoBehaviour
         {
             gizmo.suit = ParseSuit(data.suit);
             gizmo.rank = (CardRank)Mathf.Clamp(data.rank - 1, 0, 12);
+            gizmo.type = CardGizmo.ParseType(data.type);
             gizmo.showFaceDetails = true;
             gizmo.UpdateVisuals();
         }
@@ -36,12 +37,13 @@ public class TutorialCheckCard : MonoBehaviour
         {
             suit = gizmo.suit;
             rank = gizmo.rank;
+            type = gizmo.type;
         }
 
         return new TutorialCheckCardData()
         {
             id = id,
-            type = type,
+            type = CardGizmo.TypeToString(type),
             suit = suit.ToString().ToLower(),
             rank = (int)rank + 1
         };

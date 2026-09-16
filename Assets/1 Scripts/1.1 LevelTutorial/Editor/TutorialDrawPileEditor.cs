@@ -26,7 +26,7 @@ public class TutorialDrawPileEditor : Editor
             
             SerializedProperty suitProp = element.FindPropertyRelative("suit");
             SerializedProperty rankProp = element.FindPropertyRelative("rank");
-            float width = rect.width / 2;
+            float width = rect.width / 3;
             
             EditorGUI.BeginChangeCheck();
             
@@ -38,6 +38,11 @@ public class TutorialDrawPileEditor : Editor
             CardRank currentRank = (CardRank)currentRankIdx;
             CardRank newRank = (CardRank)EditorGUI.EnumPopup(new Rect(rect.x + width, rect.y, width - 5, EditorGUIUtility.singleLineHeight), currentRank);
             if (currentRank != newRank) rankProp.intValue = (int)newRank + 1;
+            
+            SerializedProperty typeProp = element.FindPropertyRelative("type");
+            CardType currentType = CardGizmo.ParseType(typeProp.stringValue);
+            CardType newType = (CardType)EditorGUI.EnumPopup(new Rect(rect.x + width * 2, rect.y, width - 5, EditorGUIUtility.singleLineHeight), currentType);
+            if (currentType != newType) typeProp.stringValue = CardGizmo.TypeToString(newType);
             
             if (EditorGUI.EndChangeCheck())
             {
