@@ -108,7 +108,7 @@ public class MapToolEditor : Editor
             EditorGUILayout.BeginVertical("helpbox");
             if (GUILayout.Button("Create New Empty Map", GUILayout.Height(30)))
             {
-                CreateNewMap(mapTpl);
+                CreateNewMap(tool, mapTpl);
             }
             
             GUILayout.Space(5);
@@ -165,9 +165,24 @@ public class MapToolEditor : Editor
         Debug.Log($"Loaded {tool.loadedMaps.Length} maps.");
     }
 
-    private void CreateNewMap(MapTemplate curTemplate)
+    private void CreateNewMap(MapTool tool, MapTemplate curTemplate)
     {
-        string newMapId = "tpl_" + System.Guid.NewGuid().ToString("N").Substring(0, 6);
+        int maxId = 0;
+        if (tool.loadedMaps != null)
+        {
+            foreach (var map in tool.loadedMaps)
+            {
+                if (map.id != null && map.id.StartsWith("tpl_"))
+                {
+                    string numStr = map.id.Substring(4);
+                    if (int.TryParse(numStr, out int mapNum))
+                    {
+                        if (mapNum > maxId) maxId = mapNum;
+                    }
+                }
+            }
+        }
+        string newMapId = "tpl_" + (maxId + 1);
         curTemplate.templateId = newMapId;
         ClearChildren(curTemplate.transform);
         SceneView.RepaintAll();
