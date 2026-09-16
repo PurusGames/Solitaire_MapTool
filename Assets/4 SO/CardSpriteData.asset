@@ -44,3 +44,7 @@ MonoBehaviour:
   diamondSprite: {fileID: 21300000, guid: ed90c5826343348a69d015a963c6c474, type: 3}
   clubSprite: {fileID: 21300000, guid: a67ce7bb996ae438cbee0a69132a77f2, type: 3}
   spadeSprite: {fileID: 21300000, guid: c594a7724f2744947a11917b0ce294fe, type: 3}
+  jokerSprite: {fileID: 21300000, guid: a7dee9f6bc7a85441958951f4db877c2, type: 3}
+  extraSprite: {fileID: 21300000, guid: bd49d58cbba804d808578a8119508307, type: 3}
+  keySprite: {fileID: 21300000, guid: 77c9a7aefd796486dbb7b29220dfa3fa, type: 3}
+  lockedSprite: {fileID: 21300000, guid: 6387d8b89839741bb86704429a8a70ac, type: 3}
