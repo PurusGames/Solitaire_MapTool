@@ -3,6 +3,21 @@ using UnityEngine;
 public enum CardSuit { Heart, Diamond, Club, Spade }
 public enum CardRank { Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
 
+public enum CardType
+{
+    Normal,
+    Joker,
+    Extra,
+    Key
+}
+
+public enum CardObstacle
+{
+    None,
+    // Frozen,
+    Locked
+}
+
 [CreateAssetMenu(fileName = "CardSpriteData", menuName = "Solitaire Map Tool/Card Sprite Data")]
 public class CardSpriteData : ScriptableObject
 {
@@ -15,6 +30,15 @@ public class CardSpriteData : ScriptableObject
     public Sprite diamondSprite;
     public Sprite clubSprite;
     public Sprite spadeSprite;
+
+    [Header("Special Type Sprites")]
+    public Sprite jokerSprite;
+    public Sprite extraSprite;
+    public Sprite keySprite;
+
+    [Header("Obstacle Sprites")]
+    // public Sprite frozenSprite;
+    public Sprite lockedSprite;
 
     public Sprite GetSuitSprite(CardSuit suit)
     {
@@ -41,5 +65,26 @@ public class CardSpriteData : ScriptableObject
             if (blackRanks != null && index < blackRanks.Length) return blackRanks[index];
         }
         return null;
+    }
+
+    public Sprite GetTypeSprite(CardType type)
+    {
+        switch (type)
+        {
+            case CardType.Joker: return jokerSprite;
+            case CardType.Extra: return extraSprite;
+            case CardType.Key: return keySprite;
+            default: return null;
+        }
+    }
+
+    public Sprite GetObstacleSprite(CardObstacle obstacle)
+    {
+        switch (obstacle)
+        {
+            // case CardObstacle.Frozen: return frozenSprite;
+            case CardObstacle.Locked: return lockedSprite;
+            default: return null;
+        }
     }
 }

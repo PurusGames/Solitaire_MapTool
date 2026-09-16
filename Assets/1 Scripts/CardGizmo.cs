@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
+using System;
 
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(SortingGroup))]
@@ -14,14 +15,17 @@ public class CardGizmo : MonoBehaviour
     public bool showFaceDetails = false;
     public CardSuit suit = CardSuit.Heart;
     public CardRank rank = CardRank.Ace;
-    public string type = "normal";
-    public string obstacle = "none";
+    
+    public CardType type = CardType.Normal;
+    public CardObstacle obstacle = CardObstacle.None;
 
     [Header("Visual References")]
     public SpriteRenderer rankRenderer;
     public SpriteRenderer suitRenderer1;
     public SpriteRenderer suitRenderer2;
-    public GameObject backRenderer;
+    public SpriteRenderer backRenderer;
+    public SpriteRenderer typeRenderer;
+    public SpriteRenderer obstacleRenderer;
 
     [Header("Collision Settings")]
     public float collisionScale = 0.8f;
@@ -34,6 +38,8 @@ public class CardGizmo : MonoBehaviour
 
     private CardSuit _lastSuit = (CardSuit)(-1);
     private CardRank _lastRank = (CardRank)(-1);
+    private CardType _lastType = (CardType)(-1);
+    private CardObstacle _lastObstacle = (CardObstacle)(-1);
     private CardSpriteData _lastSpriteData;
     private bool _lastShowFaceDetails = true;
 
@@ -93,6 +99,8 @@ public class CardGizmo : MonoBehaviour
     {
         _lastSuit = (CardSuit)(-1);
         _lastRank = (CardRank)(-1);
+        _lastType = (CardType)(-1);
+        _lastObstacle = (CardObstacle)(-1);
         _lastSpriteData = null;
         _lastShowFaceDetails = !showFaceDetails;
     }
@@ -100,17 +108,23 @@ public class CardGizmo : MonoBehaviour
     public void UpdateVisuals()
     {
         if (spriteData == null) return;
-        if (_lastSuit == suit && _lastRank == rank && _lastSpriteData == spriteData && _lastShowFaceDetails == showFaceDetails) return;
+        if (_lastSuit == suit && _lastRank == rank && _lastType == type && _lastObstacle == obstacle && _lastSpriteData == spriteData && _lastShowFaceDetails == showFaceDetails) return;
 
         _lastSuit = suit;
         _lastRank = rank;
+        _lastType = type;
+        _lastObstacle = obstacle;
         _lastSpriteData = spriteData;
         _lastShowFaceDetails = showFaceDetails;
 
+        bool isNormal = type == CardType.Normal || type == CardType.Extra; // Extra might still show rank? Actually let's just toggle rank based on Normal for now, or just show them if showFaceDetails is true.
+        // Wait, Joker and Key usually hide the normal face.
+        bool showStandardFace = showFaceDetails && (type == CardType.Normal);
+
         if (rankRenderer != null)
         {
-            rankRenderer.enabled = showFaceDetails;
-            if (showFaceDetails)
+            rankRenderer.enabled = showStandardFace;
+            if (showStandardFace)
             {
                 rankRenderer.sprite = spriteData.GetRankSprite(rank, suit);
             }
@@ -118,18 +132,46 @@ public class CardGizmo : MonoBehaviour
         
         if (suitRenderer1 != null) 
         {
-            suitRenderer1.enabled = showFaceDetails;
-            if (showFaceDetails) suitRenderer1.sprite = spriteData.GetSuitSprite(suit);
+            suitRenderer1.enabled = showStandardFace;
+            if (showStandardFace) suitRenderer1.sprite = spriteData.GetSuitSprite(suit);
         }
         if (suitRenderer2 != null) 
         {
-            suitRenderer2.enabled = showFaceDetails;
-            if (showFaceDetails) suitRenderer2.sprite = spriteData.GetSuitSprite(suit);
+            suitRenderer2.enabled = showStandardFace;
+            if (showStandardFace) suitRenderer2.sprite = spriteData.GetSuitSprite(suit);
         }
 
         if (backRenderer != null)
         {
-            backRenderer.SetActive(!showFaceDetails);
+            backRenderer.enabled = !showFaceDetails;
+        }
+
+        if (typeRenderer != null)
+        {
+            if (showFaceDetails && type != CardType.Normal)
+            {
+                typeRenderer.enabled = true;
+                typeRenderer.sprite = spriteData.GetTypeSprite(type);
+            }
+            else
+            {
+                typeRenderer.enabled = false;
+                typeRenderer.sprite = null;
+            }
+        }
+
+        if (obstacleRenderer != null)
+        {
+            if (obstacle != CardObstacle.None)
+            {
+                obstacleRenderer.enabled = true;
+                obstacleRenderer.sprite = spriteData.GetObstacleSprite(obstacle);
+            }
+            else
+            {
+                obstacleRenderer.enabled = false;
+                obstacleRenderer.sprite = null;
+            }
         }
     }
     
@@ -148,7 +190,35 @@ public class CardGizmo : MonoBehaviour
         if (rankRenderer != null) rankRenderer.sortingOrder = 1;
         if (suitRenderer1 != null) suitRenderer1.sortingOrder = 1;
         if (suitRenderer2 != null) suitRenderer2.sortingOrder = 1;
+        
+        if (backRenderer != null) backRenderer.sortingOrder = 1;
+        if (typeRenderer != null) typeRenderer.sortingOrder = 2;
+        if (obstacleRenderer != null) obstacleRenderer.sortingOrder = 3;
+    }
 
-        if (backRenderer != null) backRenderer.GetComponent<SpriteRenderer>().sortingOrder = 1;
+    public static CardType ParseType(string t)
+    {
+        if (string.IsNullOrEmpty(t)) return CardType.Normal;
+        try {
+            return (CardType)Enum.Parse(typeof(CardType), t, true);
+        } catch { return CardType.Normal; }
+    }
+
+    public static string TypeToString(CardType t)
+    {
+        return t.ToString().ToLower();
+    }
+
+    public static CardObstacle ParseObstacle(string o)
+    {
+        if (string.IsNullOrEmpty(o)) return CardObstacle.None;
+        try {
+            return (CardObstacle)Enum.Parse(typeof(CardObstacle), o, true);
+        } catch { return CardObstacle.None; }
+    }
+
+    public static string ObstacleToString(CardObstacle o)
+    {
+        return o.ToString().ToLower();
     }
 }
