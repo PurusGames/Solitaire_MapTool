@@ -80,6 +80,21 @@ public class TutorialMapToolEditor : Editor
                 {
                     GenerateLevelInScene(tool, level);
                 }
+                
+                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+                if (GUILayout.Button("Delete", GUILayout.Width(60)))
+                {
+                    if (EditorUtility.DisplayDialog("Delete Level", $"Are you sure you want to delete level '{level.id}'?", "Yes", "No"))
+                    {
+                        var list = new System.Collections.Generic.List<TutorialLevelData>(tool.loadedLevels);
+                        list.Remove(level);
+                        tool.loadedLevels = list.ToArray();
+                        SaveJSONs(tool);
+                        GUIUtility.ExitGUI();
+                    }
+                }
+                GUI.backgroundColor = Color.white;
+                
                 GUILayout.EndHorizontal();
                 GUILayout.Space(2);
             }
@@ -302,18 +317,14 @@ public class TutorialMapToolEditor : Editor
             }
         }
 
-        // Collect cards from scene
         System.Collections.Generic.List<TutorialCardData> cards = new System.Collections.Generic.List<TutorialCardData>();
         CardGizmo[] gizmos = tool.GetComponentsInChildren<CardGizmo>();
         
         int cardIdCounter = 1;
         foreach (var gizmo in gizmos)
         {
-            // Ignore if it's the check card
             if (tool.checkCardObj != null && gizmo.transform.IsChildOf(tool.checkCardObj.transform)) continue;
-            // Ignore if it belongs to the draw pile
             if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
-            // (Legacy support)
             if (gizmo.GetComponent<TutorialCheckCard>() != null || gizmo.gameObject.name == "CheckCardData") continue;
             Vector3 localPos = tool.transform.InverseTransformPoint(gizmo.transform.position);
             float angle = gizmo.transform.localEulerAngles.z;
