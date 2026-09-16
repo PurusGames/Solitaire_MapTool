@@ -30,7 +30,6 @@ public class CardGizmo : MonoBehaviour
     private SortingGroup _sortingGroup;
 
     private int _lastLayer = -9999;
-    private float _lastZ = -9999f;
 
     private CardSuit _lastSuit = (CardSuit)(-1);
     private CardRank _lastRank = (CardRank)(-1);
@@ -47,27 +46,31 @@ public class CardGizmo : MonoBehaviour
 
         if (Application.isPlaying) return;
 
-        bool zChanged = !Mathf.Approximately(_lastZ, transform.localPosition.z);
-        bool layerChanged = _lastLayer != layer;
+        if (_sortingGroup == null)
+        {
+            _sortingGroup = GetComponent<SortingGroup>();
+        }
 
-        if (zChanged && !layerChanged)
+        if (_sortingGroup != null)
         {
-            layer = Mathf.RoundToInt(-transform.localPosition.z);
-            _lastLayer = layer;
-            _lastZ = transform.localPosition.z;
-        }
-        else if (layerChanged && !zChanged)
-        {
-            Vector3 pos = transform.localPosition;
-            pos.z = -layer;
-            transform.localPosition = pos;
-            _lastZ = pos.z;
-            _lastLayer = layer;
-        }
-        else if (zChanged && layerChanged)
-        {
-            _lastLayer = layer;
-            _lastZ = transform.localPosition.z;
+            bool layerChanged = _lastLayer != layer;
+            bool sortingChanged = _sortingGroup.sortingOrder != layer;
+
+            if (layerChanged && !sortingChanged)
+            {
+                _sortingGroup.sortingOrder = layer;
+                _lastLayer = layer;
+            }
+            else if (sortingChanged && !layerChanged)
+            {
+                layer = _sortingGroup.sortingOrder;
+                _lastLayer = layer;
+            }
+            else if (layerChanged && sortingChanged)
+            {
+                _lastLayer = layer;
+                _sortingGroup.sortingOrder = layer;
+            }
         }
 
         // Auto-generate name based on sibling index to avoid manual renaming
@@ -126,26 +129,9 @@ public class CardGizmo : MonoBehaviour
     
     public void UpdateSorting()
     {
-        if (_sortingGroup == null)
-        {
-            _sortingGroup = GetComponent<SortingGroup>();
-        }
-
         if (_spriteRenderer == null)
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
-        }
-        
-        int totalLayer = layer;
-        ShapeTemplate parentShape = GetComponentInParent<ShapeTemplate>();
-        if (parentShape != null)
-        {
-            totalLayer += parentShape.baseLayer;
-        }
-
-        if (_sortingGroup != null)
-        {
-            _sortingGroup.sortingOrder = totalLayer;
         }
 
         if (_spriteRenderer != null)
