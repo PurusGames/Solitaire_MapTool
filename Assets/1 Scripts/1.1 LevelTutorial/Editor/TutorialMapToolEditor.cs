@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using System.Collections.Generic;
 
 [CustomEditor(typeof(TutorialMapTool))]
 public class TutorialMapToolEditor : Editor
@@ -31,6 +32,33 @@ public class TutorialMapToolEditor : Editor
                 continue;
             }
             
+            if (prop.name == "targetType")
+            {
+                string[] types = { "manual", "tutorial" };
+                int selectedType = Mathf.Max(0, System.Array.IndexOf(types, prop.stringValue));
+                selectedType = EditorGUILayout.Popup("Target Type", selectedType, types);
+                prop.stringValue = types[selectedType];
+                continue;
+            }
+
+            if (prop.name == "targetDifficulty")
+            {
+                string[] difficulties = { "easy", "medium", "hard", "super_hard" };
+                int selectedDiff = Mathf.Max(0, System.Array.IndexOf(difficulties, prop.stringValue));
+                selectedDiff = EditorGUILayout.Popup("Target Difficulty", selectedDiff, difficulties);
+                prop.stringValue = difficulties[selectedDiff];
+                continue;
+            }
+
+            if (prop.name == "targetMode")
+            {
+                string[] modes = { "classic" };
+                int selectedMode = Mathf.Max(0, System.Array.IndexOf(modes, prop.stringValue));
+                selectedMode = EditorGUILayout.Popup("Target Mode", selectedMode, modes);
+                prop.stringValue = modes[selectedMode];
+                continue;
+            }
+
             EditorGUILayout.PropertyField(prop, true);
             
             if (prop.name == "jsonPath")
@@ -74,15 +102,48 @@ public class TutorialMapToolEditor : Editor
             foreach (var level in tool.loadedLevels)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label($"Level ID: {level.id} ({level.difficulty})", GUILayout.Width(180));
                 
-                if (GUILayout.Button("Generate In Scene", GUILayout.Width(160)))
+                GUILayout.Label($"ID: {level.id}", GUILayout.Width(50));
+                
+                string[] itemTypes = { "manual", "tutorial" };
+                int tIdx = Mathf.Max(0, System.Array.IndexOf(itemTypes, string.IsNullOrEmpty(level.type) ? "tutorial" : level.type));
+                int newTIdx = EditorGUILayout.Popup(tIdx, itemTypes, GUILayout.Width(75));
+                
+                string[] itemDiffs = { "easy", "medium", "hard", "super_hard" };
+                int dIdx = Mathf.Max(0, System.Array.IndexOf(itemDiffs, string.IsNullOrEmpty(level.difficulty) ? "easy" : level.difficulty));
+                int newDIdx = EditorGUILayout.Popup(dIdx, itemDiffs, GUILayout.Width(95));
+
+                if (newTIdx != tIdx || newDIdx != dIdx)
+                {
+                    level.type = itemTypes[newTIdx];
+                    level.difficulty = itemDiffs[newDIdx];
+                    if (level.type == "tutorial" && level.tutorialConfig == null) 
+                    {
+                        level.tutorialConfig = new TutorialConfig 
+                        {
+                            instructions = new System.Collections.Generic.List<TutorialInstruction> 
+                            {
+                                new TutorialInstruction { type = "tap_card", cardId = 2 },
+                                new TutorialInstruction { type = "tap_drawpile", cardId = 0 }
+                            }
+                        };
+                    } 
+                    else if (level.type != "tutorial") 
+                    {
+                        level.tutorialConfig = null;
+                    }
+                    SaveJSONs(tool);
+                    GUIUtility.ExitGUI();
+                }
+                
+                GUILayout.Space(5);
+                if (GUILayout.Button("Generate", GUILayout.Width(80)))
                 {
                     GenerateLevelInScene(tool, level);
                 }
                 
                 GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
-                if (GUILayout.Button("Delete", GUILayout.Width(60)))
+                if (GUILayout.Button("Del", GUILayout.Width(35)))
                 {
                     if (EditorUtility.DisplayDialog("Delete Level", $"Are you sure you want to delete level '{level.id}'?", "Yes", "No"))
                     {
@@ -139,8 +200,6 @@ public class TutorialMapToolEditor : Editor
         GUI.backgroundColor = Color.white;
         EditorGUILayout.EndVertical();
     }
-
-
 
     private void CenterMap(TutorialMapTool tool)
     {
@@ -214,6 +273,7 @@ public class TutorialMapToolEditor : Editor
             Undo.DestroyObjectImmediate(childObj);
         }
         
+        // Use standard tool defaults when clearing
         if (tool != null) 
         {
             var defaultLevel = new TutorialLevelData();
@@ -282,7 +342,6 @@ public class TutorialMapToolEditor : Editor
             }
         }
 
-        // Find or create level
         var levelList = new System.Collections.Generic.List<TutorialLevelData>(tool.loadedLevels);
         TutorialLevelData existingLevel = levelList.Find(l => l.id == targetId);
         
@@ -293,10 +352,10 @@ public class TutorialMapToolEditor : Editor
                 existingLevel = new TutorialLevelData 
                 { 
                     id = targetId,
-                    type = "tutorial",
-                    mode = "classic",
-                    difficulty = "easy",
-                    tutorialConfig = new TutorialConfig { cards = new System.Collections.Generic.List<TutorialCardData>() },
+                    type = tool.targetType,
+                    mode = tool.targetMode,
+                    difficulty = tool.targetDifficulty,
+                    manualConfig = new ManualConfig { cards = new System.Collections.Generic.List<TutorialCardData>() },
                     checkCardData = new TutorialCheckCardData { id = "check-0", type = "normal", suit = "spade", rank = 4 },
                     drawPileData = new TutorialDrawPileData 
                     { 
@@ -311,10 +370,31 @@ public class TutorialMapToolEditor : Editor
         }
         else
         {
-            if (existingLevel.tutorialConfig == null) 
+            existingLevel.type = tool.targetType;
+            existingLevel.mode = tool.targetMode;
+            existingLevel.difficulty = tool.targetDifficulty;
+
+            if (existingLevel.manualConfig == null) 
             {
-                existingLevel.tutorialConfig = new TutorialConfig { cards = new System.Collections.Generic.List<TutorialCardData>() };
+                existingLevel.manualConfig = new ManualConfig { cards = new System.Collections.Generic.List<TutorialCardData>() };
             }
+        }
+
+        if (tool.targetType == "tutorial" && existingLevel.tutorialConfig == null)
+        {
+            existingLevel.tutorialConfig = new TutorialConfig 
+            {
+                instructions = new System.Collections.Generic.List<TutorialInstruction> 
+                {
+                    new TutorialInstruction { type = "tap_card", cardId = 2 },
+                    new TutorialInstruction { type = "tap_drawpile", cardId = 0 }
+                }
+            };
+        }
+        else if (tool.targetType != "tutorial")
+        {
+            // Nullify tutorial config if it's not tutorial type
+            existingLevel.tutorialConfig = null;
         }
 
         System.Collections.Generic.List<TutorialCardData> cards = new System.Collections.Generic.List<TutorialCardData>();
@@ -345,7 +425,7 @@ public class TutorialMapToolEditor : Editor
             cardIdCounter++;
         }
 
-        existingLevel.tutorialConfig.cards = cards;
+        existingLevel.manualConfig.cards = cards;
 
         UnityEditor.TutorialDataHelper.SaveExtraObjects(tool, existingLevel);
 
@@ -357,17 +437,25 @@ public class TutorialMapToolEditor : Editor
 
     private void SaveJSONs(TutorialMapTool tool)
     {
-        ArrayWrapper<TutorialLevelData> wrapper = new ArrayWrapper<TutorialLevelData> { Items = tool.loadedLevels };
-        string json = JsonUtility.ToJson(wrapper, true);
-        int start = json.IndexOf("[");
-        int end = json.LastIndexOf("]");
-        if (start != -1 && end != -1)
+        string json = string.Empty;
+        if (tool.loadedLevels == null || tool.loadedLevels.Length == 0)
         {
-            json = json.Substring(start, end - start + 1);
+            json = "[]";
         }
         else
         {
-            json = "[]";
+            ArrayWrapper<TutorialLevelData> wrapper = new ArrayWrapper<TutorialLevelData> { Items = tool.loadedLevels };
+            json = JsonUtility.ToJson(wrapper, true);
+            int start = json.IndexOf("[");
+            int end = json.LastIndexOf("]");
+            if (start != -1 && end != -1)
+            {
+                json = json.Substring(start, end - start + 1);
+            }
+            else
+            {
+                json = "[]";
+            }
         }
         File.WriteAllText(tool.jsonPath, json);
         AssetDatabase.Refresh();
@@ -412,53 +500,54 @@ public class TutorialMapToolEditor : Editor
             Undo.DestroyObjectImmediate(childObj);
         }
 
-        if (level.tutorialConfig == null || level.tutorialConfig.cards == null)
+        if (level.manualConfig == null || level.manualConfig.cards == null)
         {
-            Debug.LogWarning($"Level {level.id} has no tutorial config or cards.");
-            return;
+            Debug.LogWarning($"Level {level.id} has no cards inside manualConfig.");
         }
-
-        foreach (var cardData in level.tutorialConfig.cards)
+        else
         {
-            GameObject cardGo = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
-            
-            if (cardGo == null)
+            foreach (var cardData in level.manualConfig.cards)
             {
-                Debug.LogError("Failed to instantiate card prefab.");
-                continue;
-            }
-
-            Undo.RegisterCreatedObjectUndo(cardGo, "Create Tutorial Card");
-            cardGo.name = $"card_{cardData.id}";
-            cardGo.transform.SetParent(tool.transform);
-
-            float stX = cardData.x / tool.positionMultiplier;
-            float stY = (tool.invertY ? -cardData.y : cardData.y) / tool.positionMultiplier;
-            float stAngle = tool.invertAngle ? -cardData.angle : cardData.angle;
-
-            cardGo.transform.localPosition = new Vector3(stX, stY, -cardData.layer);
-            cardGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
-
-            CardGizmo gizmo = cardGo.GetComponent<CardGizmo>();
-            if (gizmo != null)
-            {
-                gizmo.layer = cardData.layer;
-                gizmo.suit = ParseSuit(cardData.suit);
+                GameObject cardGo = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
                 
-                int rankIdx = cardData.rank - 1;
-                rankIdx = Mathf.Clamp(rankIdx, 0, 12);
-                gizmo.rank = (CardRank)rankIdx;
-                gizmo.type = CardGizmo.ParseType(cardData.type);
-                gizmo.obstacle = CardGizmo.ParseObstacle(cardData.obstacle);
-                
-                if (tool.cardSpriteData != null)
+                if (cardGo == null)
                 {
-                    gizmo.spriteData = tool.cardSpriteData;
+                    Debug.LogError("Failed to instantiate card prefab.");
+                    continue;
                 }
-                
-                gizmo.showFaceDetails = true;
-                gizmo.UpdateVisuals();
-                gizmo.UpdateSorting();
+
+                Undo.RegisterCreatedObjectUndo(cardGo, "Create Tutorial Card");
+                cardGo.name = $"card_{cardData.id}";
+                cardGo.transform.SetParent(tool.transform);
+
+                float stX = cardData.x / tool.positionMultiplier;
+                float stY = (tool.invertY ? -cardData.y : cardData.y) / tool.positionMultiplier;
+                float stAngle = tool.invertAngle ? -cardData.angle : cardData.angle;
+
+                cardGo.transform.localPosition = new Vector3(stX, stY, -cardData.layer);
+                cardGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
+
+                CardGizmo gizmo = cardGo.GetComponent<CardGizmo>();
+                if (gizmo != null)
+                {
+                    gizmo.layer = cardData.layer;
+                    gizmo.suit = ParseSuit(cardData.suit);
+                    
+                    int rankIdx = cardData.rank - 1;
+                    rankIdx = Mathf.Clamp(rankIdx, 0, 12);
+                    gizmo.rank = (CardRank)rankIdx;
+                    gizmo.type = CardGizmo.ParseType(cardData.type);
+                    gizmo.obstacle = CardGizmo.ParseObstacle(cardData.obstacle);
+                    
+                    if (tool.cardSpriteData != null)
+                    {
+                        gizmo.spriteData = tool.cardSpriteData;
+                    }
+                    
+                    gizmo.showFaceDetails = true;
+                    gizmo.UpdateVisuals();
+                    gizmo.UpdateSorting();
+                }
             }
         }
 
@@ -466,9 +555,12 @@ public class TutorialMapToolEditor : Editor
 
         Selection.activeGameObject = tool.gameObject;
         tool.targetLevelId = level.id.ToString();
+        tool.targetType = string.IsNullOrEmpty(level.type) ? "tutorial" : level.type;
+        tool.targetMode = string.IsNullOrEmpty(level.mode) ? "classic" : level.mode;
+        tool.targetDifficulty = string.IsNullOrEmpty(level.difficulty) ? "easy" : level.difficulty;
         tool.UpdateLevelText();
         EditorUtility.SetDirty(tool);
-        Debug.Log($"Generated Tutorial Level {level.id} in scene.");
+        Debug.Log($"Generated Level {level.id} [{tool.targetType}] in scene.");
     }
 
     private CardSuit ParseSuit(string suitStr)

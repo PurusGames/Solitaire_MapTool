@@ -17,7 +17,7 @@ public class TutorialCardData
 }
 
 [System.Serializable]
-public class TutorialConfig
+public class ManualConfig
 {
     public List<TutorialCardData> cards;
 }
@@ -48,15 +48,29 @@ public class TutorialDrawPileData
 }
 
 [System.Serializable]
+public class TutorialInstruction
+{
+    public string type;
+    public int cardId;
+}
+
+[System.Serializable]
+public class TutorialConfig
+{
+    public List<TutorialInstruction> instructions;
+}
+
+[System.Serializable]
 public class TutorialLevelData
 {
     public int id;
     public string type;
     public string mode;
     public string difficulty;
-    public TutorialConfig tutorialConfig;
+    public ManualConfig manualConfig;
     public TutorialCheckCardData checkCardData;
     public TutorialDrawPileData drawPileData;
+    public TutorialConfig tutorialConfig;
 }
 
 public class TutorialMapTool : MonoBehaviour
@@ -80,6 +94,10 @@ public class TutorialMapTool : MonoBehaviour
     [Header("Current Target")]
     [Tooltip("Leave empty to auto-increment max ID")]
     public string targetLevelId = "";
+
+    public string targetType = "tutorial"; // default
+    public string targetDifficulty = "easy";
+    public string targetMode = "classic";
 
     [Header("Generation Settings")]
     public float positionMultiplier = 100f;
