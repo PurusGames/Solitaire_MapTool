@@ -10,13 +10,21 @@ public class TutorialMapToolEditor : Editor
     private Vector2 stepScrollPos;
 
     [System.Serializable]
-    private class ArrayWrapper<T>
+    public class ArrayWrapper<T>
     {
         public T[] Items;
     }
 
     public override void OnInspectorGUI()
     {
+        GUI.backgroundColor = new Color(0.3f, 0.75f, 1f);
+        if (GUILayout.Button("⧉ Open Tutorial Map Tool Tab (Dockable Window)", GUILayout.Height(32)))
+        {
+            TutorialMapToolWindow.ShowWindow();
+        }
+        GUI.backgroundColor = Color.white;
+        GUILayout.Space(8);
+
         serializedObject.Update();
         SerializedProperty prop = serializedObject.GetIterator();
         bool enterChildren = true;
@@ -167,7 +175,7 @@ public class TutorialMapToolEditor : Editor
         }
 
         // TUTORIAL STEPS SECTION
-        DrawTutorialStepsGUI(tool);
+        DrawTutorialStepsGUI(tool, ref stepScrollPos);
 
         GUILayout.Space(15);
         EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
@@ -184,7 +192,7 @@ public class TutorialMapToolEditor : Editor
         
         GUILayout.Space(5);
         GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
-        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(30)))
+        if (GUILayout.Button("Add New Card into Canvas", GUILayout.Height(30)))
         {
             AddNewCard(tool);
         }
@@ -207,8 +215,10 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
-    private void DrawTutorialStepsGUI(TutorialMapTool tool)
+    public static void DrawTutorialStepsGUI(TutorialMapTool tool, ref Vector2 scrollPos)
     {
+        if (tool == null) return;
+
         GUILayout.Space(15);
         EditorGUILayout.LabelField("Tutorial Steps Sequence:", EditorStyles.boldLabel);
         EditorGUILayout.BeginVertical("helpbox");
@@ -221,7 +231,7 @@ public class TutorialMapToolEditor : Editor
         }
         else
         {
-            stepScrollPos = EditorGUILayout.BeginScrollView(stepScrollPos, GUILayout.MaxHeight(220));
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.MaxHeight(220));
 
             for (int i = 0; i < tool.tutorialSteps.Count; i++)
             {
@@ -353,8 +363,9 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
-    private void CenterMap(TutorialMapTool tool)
+    public static void CenterMap(TutorialMapTool tool)
     {
+        if (tool == null) return;
         CardGizmo[] gizmos = tool.GetComponentsInChildren<CardGizmo>();
         if (gizmos.Length == 0) return;
 
@@ -397,8 +408,9 @@ public class TutorialMapToolEditor : Editor
         EditorUtility.SetDirty(tool);
     }
 
-    private void ClearChildren(Transform t)
+    public static void ClearChildren(Transform t)
     {
+        if (t == null) return;
         Undo.RegisterFullObjectHierarchyUndo(t.gameObject, "Clear Canvas");
         TutorialMapTool tool = t.GetComponent<TutorialMapTool>();
         
@@ -421,8 +433,9 @@ public class TutorialMapToolEditor : Editor
         }
     }
 
-    private void AddNewCard(TutorialMapTool tool)
+    public static void AddNewCard(TutorialMapTool tool)
     {
+        if (tool == null) return;
         if (tool.cardPrefab == null)
         {
             EditorUtility.DisplayDialog("Error", "Missing Card Prefab in TutorialMapTool!", "OK");
@@ -447,8 +460,9 @@ public class TutorialMapToolEditor : Editor
         Undo.RegisterCreatedObjectUndo(newCard, "Add Card");
     }
 
-    private void SaveTutorialMapToJSON(TutorialMapTool tool)
+    public static void SaveTutorialMapToJSON(TutorialMapTool tool)
     {
+        if (tool == null) return;
         if (tool.loadedLevels == null)
         {
             EditorUtility.DisplayDialog("Error", "Levels not loaded! Please load JSON first.", "OK");
@@ -603,8 +617,9 @@ public class TutorialMapToolEditor : Editor
         EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}\n• Canvas Cards: {cards.Count}\n• Tutorial Steps: {existingLevel.tutorialConfig.instructions.Count}", "OK");
     }
 
-    private void SaveJSONs(TutorialMapTool tool)
+    public static void SaveJSONs(TutorialMapTool tool)
     {
+        if (tool == null) return;
         string json = string.Empty;
         if (tool.loadedLevels == null || tool.loadedLevels.Length == 0)
         {
@@ -629,8 +644,9 @@ public class TutorialMapToolEditor : Editor
         AssetDatabase.Refresh();
     }
 
-    private void LoadJSONs(TutorialMapTool tool)
+    public static void LoadJSONs(TutorialMapTool tool)
     {
+        if (tool == null) return;
         if (string.IsNullOrEmpty(tool.jsonPath) || !File.Exists(tool.jsonPath))
         {
             EditorUtility.DisplayDialog("Error", $"JSON not found at: {tool.jsonPath}", "OK");
@@ -646,8 +662,9 @@ public class TutorialMapToolEditor : Editor
         Debug.Log($"Loaded {tool.loadedLevels.Length} tutorial levels.");
     }
 
-    private void GenerateLevelInScene(TutorialMapTool tool, TutorialLevelData level)
+    public static void GenerateLevelInScene(TutorialMapTool tool, TutorialLevelData level)
     {
+        if (tool == null || level == null) return;
         if (tool.cardPrefab == null)
         {
             EditorUtility.DisplayDialog("Error", "Please assign a Card Prefab in the TutorialMapTool.", "OK");

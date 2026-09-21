@@ -17,17 +17,6 @@ public class CardGizmoEditor : Editor
 
         GUILayout.Space(5);
 
-        // show/hide rank & suit
-        // GUI.backgroundColor = showFaceProp.boolValue ? Color.green : Color.gray;
-        // if (GUILayout.Button(showFaceProp.boolValue ? "Show Rank & Suit" : "Hide Rank & Suit", GUILayout.Height(30)))
-        // {
-        //     showFaceProp.boolValue = !showFaceProp.boolValue;
-        // }
-        // return bg color
-        GUI.backgroundColor = Color.white;
-
-        GUILayout.Space(5);
-
         // Layer Property with +/-
         GUILayout.BeginHorizontal("box");
         GUILayout.Label("Card Layer: " + layerProp.intValue, EditorStyles.boldLabel, GUILayout.Width(100));
@@ -182,6 +171,12 @@ public class CardGizmoEditor : Editor
             GUI.backgroundColor = Color.white;
         }
 
+        GUILayout.Space(6);
+        if (GUILayout.Button("⧉ Open Tutorial Map Tab (Dockable)", GUILayout.Height(24)))
+        {
+            TutorialMapToolWindow.ShowWindow();
+        }
+
         EditorGUILayout.EndVertical();
     }
 
@@ -198,7 +193,7 @@ public class CardGizmoEditor : Editor
             }
             else
             {
-                prop.enumValueIndex = prop.enumDisplayNames.Length - 1;
+                prop.enumValueIndex = prop.enumNames.Length - 1;
             }
         }
 
@@ -206,7 +201,7 @@ public class CardGizmoEditor : Editor
 
         if (GUILayout.Button("+", GUILayout.Width(35), GUILayout.Height(20)))
         {
-            if (prop.enumValueIndex < prop.enumDisplayNames.Length - 1)
+            if (prop.enumValueIndex < prop.enumNames.Length - 1)
             {
                 prop.enumValueIndex++;
             }
