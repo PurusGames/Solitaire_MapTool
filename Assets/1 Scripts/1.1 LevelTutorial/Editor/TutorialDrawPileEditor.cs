@@ -46,7 +46,7 @@ public class TutorialDrawPileEditor : Editor
             
             if (EditorGUI.EndChangeCheck())
             {
-                // We don't apply properties here, the OnInspectorGUI change check handles it.
+                // Serialized properties updated
             }
         };
 
@@ -56,7 +56,6 @@ public class TutorialDrawPileEditor : Editor
         };
 
         cardList.onAddCallback = (ReorderableList list) => {
-            // It is usually better to let ReorderableList handle adding, but we want a default value.
             serializedObject.ApplyModifiedProperties();
             Undo.RecordObject(pile, "Add Fixed Card");
             pile.fixedCards.Add(new TutorialFixedCard { id = $"draw-{pile.fixedCards.Count}", type = "normal", suit = "heart", rank = 1 });
@@ -78,12 +77,52 @@ public class TutorialDrawPileEditor : Editor
 
     private void RefreshVisuals()
     {
+        if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
         if (tool != null && pile != null)
         {
             Undo.RegisterFullObjectHierarchyUndo(pile.gameObject, "Update Visuals");
             pile.RefreshVisuals(tool.cardPrefab, tool.positionMultiplier, tool.cardSpriteData);
             SceneView.RepaintAll();
         }
+    }
+
+    private void AddNewCardPrefabToPile()
+    {
+        if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
+        if (tool == null || tool.cardPrefab == null)
+        {
+            EditorUtility.DisplayDialog("Error", "Missing Card Prefab in TutorialMapTool!", "OK");
+            return;
+        }
+
+        Undo.RecordObject(pile, "Add Card to Draw Pile");
+
+        int newIdx = pile.transform.childCount;
+        GameObject go = (GameObject)PrefabUtility.InstantiatePrefab(tool.cardPrefab);
+        go.transform.SetParent(pile.transform, false);
+        go.name = $"draw-{newIdx}";
+
+        float mult = tool.positionMultiplier > 0 ? tool.positionMultiplier : 100f;
+        go.transform.localPosition = new Vector3(-(newIdx * pile.cardSpacing) / mult, 0, newIdx);
+
+        CardGizmo gizmo = go.GetComponent<CardGizmo>();
+        if (gizmo != null)
+        {
+            gizmo.cardId = -(newIdx + 1);
+            gizmo.suit = CardSuit.Heart;
+            gizmo.rank = CardRank.Ace;
+            gizmo.type = CardType.Normal;
+            gizmo.layer = -newIdx;
+            gizmo.showFaceDetails = true;
+            if (tool.cardSpriteData != null) gizmo.spriteData = tool.cardSpriteData;
+            gizmo.UpdateVisuals();
+            gizmo.UpdateSorting();
+        }
+
+        Undo.RegisterCreatedObjectUndo(go, "Create DrawPile Card");
+        pile.SaveData();
+        serializedObject.Update();
+        Selection.activeGameObject = go;
     }
 
     public override void OnInspectorGUI()
@@ -107,5 +146,29 @@ public class TutorialDrawPileEditor : Editor
         {
             serializedObject.ApplyModifiedProperties();
         }
+
+        GUILayout.Space(10);
+        EditorGUILayout.LabelField("Scene Actions:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginVertical("helpbox");
+
+        GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
+        if (GUILayout.Button("+ Add Card Prefab to Draw Pile", GUILayout.Height(30)))
+        {
+            AddNewCardPrefabToPile();
+        }
+        GUI.backgroundColor = Color.white;
+
+        GUILayout.Space(3);
+        if (GUILayout.Button("Realign & Sync From Scene Cards", GUILayout.Height(25)))
+        {
+            if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
+            float mult = tool != null ? tool.positionMultiplier : 100f;
+            pile.RealignChildrenPositions(mult);
+            pile.SaveData();
+            serializedObject.Update();
+            SceneView.RepaintAll();
+        }
+
+        EditorGUILayout.EndVertical();
     }
 }

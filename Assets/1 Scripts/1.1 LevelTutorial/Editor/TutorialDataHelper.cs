@@ -5,8 +5,33 @@ namespace UnityEditor
 {
     public static class TutorialDataHelper
     {
+        public static void AutoResolveReferences(TutorialMapTool tool)
+        {
+            if (tool == null) return;
+
+            if (tool.checkCardObj == null)
+            {
+                tool.checkCardObj = tool.GetComponentInChildren<TutorialCheckCard>();
+                if (tool.checkCardObj == null)
+                {
+                    tool.checkCardObj = Object.FindObjectOfType<TutorialCheckCard>();
+                }
+            }
+
+            if (tool.drawPileObj == null)
+            {
+                tool.drawPileObj = tool.GetComponentInChildren<TutorialDrawPile>();
+                if (tool.drawPileObj == null)
+                {
+                    tool.drawPileObj = Object.FindObjectOfType<TutorialDrawPile>();
+                }
+            }
+        }
+
         public static void GenerateExtraObjects(TutorialMapTool tool, TutorialLevelData level)
         {
+            AutoResolveReferences(tool);
+
             if (tool.checkCardObj != null)
             {
                 if (level.checkCardData != null)
@@ -36,6 +61,8 @@ namespace UnityEditor
 
         public static void SaveExtraObjects(TutorialMapTool tool, TutorialLevelData level)
         {
+            AutoResolveReferences(tool);
+
             if (tool.checkCardObj != null)
             {
                 level.checkCardData = tool.checkCardObj.SaveData();

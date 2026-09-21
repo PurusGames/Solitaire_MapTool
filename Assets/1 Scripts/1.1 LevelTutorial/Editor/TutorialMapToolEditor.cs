@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public class TutorialMapToolEditor : Editor
 {
     private Vector2 scrollPos;
+    private Vector2 stepScrollPos;
 
     [System.Serializable]
     private class ArrayWrapper<T>
@@ -29,6 +30,12 @@ public class TutorialMapToolEditor : Editor
                 {
                     EditorGUILayout.PropertyField(prop, true);
                 }
+                continue;
+            }
+
+            // Hide raw tutorialSteps property from default inspector as we render a custom UI for it
+            if (prop.name == "tutorialSteps")
+            {
                 continue;
             }
             
@@ -98,7 +105,7 @@ public class TutorialMapToolEditor : Editor
             EditorGUILayout.LabelField($"Loaded {tool.loadedLevels.Length} Tutorial Levels:", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginVertical("helpbox");
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(300));
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(220));
             foreach (var level in tool.loadedLevels)
             {
                 GUILayout.BeginHorizontal();
@@ -117,20 +124,16 @@ public class TutorialMapToolEditor : Editor
                 {
                     level.type = itemTypes[newTIdx];
                     level.difficulty = itemDiffs[newDIdx];
-                    if (level.type == "tutorial" && level.tutorialConfig == null) 
+                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.instructions == null)) 
                     {
                         level.tutorialConfig = new TutorialConfig 
                         {
-                            instructions = new System.Collections.Generic.List<TutorialInstruction> 
-                            {
-                                new TutorialInstruction { type = "tap_card", cardId = 2 },
-                                new TutorialInstruction { type = "tap_drawpile", cardId = 0 }
-                            }
+                            instructions = new List<TutorialInstruction>()
                         };
                     } 
                     else if (level.type != "tutorial") 
                     {
-                        level.tutorialConfig = null;
+                        level.tutorialConfig = new TutorialConfig { instructions = new List<TutorialInstruction>() };
                     }
                     SaveJSONs(tool);
                     GUIUtility.ExitGUI();
@@ -147,7 +150,7 @@ public class TutorialMapToolEditor : Editor
                 {
                     if (EditorUtility.DisplayDialog("Delete Level", $"Are you sure you want to delete level '{level.id}'?", "Yes", "No"))
                     {
-                        var list = new System.Collections.Generic.List<TutorialLevelData>(tool.loadedLevels);
+                        var list = new List<TutorialLevelData>(tool.loadedLevels);
                         list.Remove(level);
                         tool.loadedLevels = list.ToArray();
                         SaveJSONs(tool);
@@ -162,6 +165,9 @@ public class TutorialMapToolEditor : Editor
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
+
+        // TUTORIAL STEPS SECTION
+        DrawTutorialStepsGUI(tool);
 
         GUILayout.Space(15);
         EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
@@ -178,7 +184,7 @@ public class TutorialMapToolEditor : Editor
         
         GUILayout.Space(5);
         GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
-        if (GUILayout.Button("Add New Card into Canvas", GUILayout.Height(30)))
+        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(30)))
         {
             AddNewCard(tool);
         }
@@ -201,60 +207,194 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
+    private void DrawTutorialStepsGUI(TutorialMapTool tool)
+    {
+        GUILayout.Space(15);
+        EditorGUILayout.LabelField("Tutorial Steps Sequence:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginVertical("helpbox");
+
+        EditorGUILayout.HelpBox("Order of tutorial steps shown to the player. Drag or use ▲/▼ to change order.", MessageType.None);
+
+        if (tool.tutorialSteps == null || tool.tutorialSteps.Count == 0)
+        {
+            EditorGUILayout.LabelField("No tutorial steps defined yet.", EditorStyles.centeredGreyMiniLabel);
+        }
+        else
+        {
+            stepScrollPos = EditorGUILayout.BeginScrollView(stepScrollPos, GUILayout.MaxHeight(220));
+
+            for (int i = 0; i < tool.tutorialSteps.Count; i++)
+            {
+                var step = tool.tutorialSteps[i];
+                EditorGUILayout.BeginHorizontal("box");
+
+                // Step number badge
+                GUILayout.Label($"#{i + 1}", EditorStyles.boldLabel, GUILayout.Width(28));
+
+                // Step type dropdown
+                TutorialStepType prevType = step.stepType;
+                step.stepType = (TutorialStepType)EditorGUILayout.EnumPopup(step.stepType, GUILayout.Width(100));
+                if (prevType != step.stepType)
+                {
+                    tool.SyncTutorialSteps();
+                }
+
+                // Target card selector / display
+                if (step.stepType == TutorialStepType.TapCard)
+                {
+                    CardGizmo prevCard = step.targetCard;
+                    step.targetCard = (CardGizmo)EditorGUILayout.ObjectField(step.targetCard, typeof(CardGizmo), true);
+                    if (prevCard != step.targetCard)
+                    {
+                        tool.SyncTutorialSteps();
+                    }
+
+                    if (step.targetCard != null)
+                    {
+                        if (GUILayout.Button("Select", GUILayout.Width(50)))
+                        {
+                            Selection.activeGameObject = step.targetCard.gameObject;
+                        }
+                    }
+                }
+                else
+                {
+                    GUILayout.Label("-> Draw Pile", EditorStyles.miniBoldLabel);
+                    GUILayout.FlexibleSpace();
+                }
+
+                // Move Up
+                GUI.enabled = i > 0;
+                if (GUILayout.Button("▲", GUILayout.Width(25)))
+                {
+                    tool.MoveStep(i, i - 1);
+                    GUIUtility.ExitGUI();
+                }
+
+                // Move Down
+                GUI.enabled = i < tool.tutorialSteps.Count - 1;
+                if (GUILayout.Button("▼", GUILayout.Width(25)))
+                {
+                    tool.MoveStep(i, i + 1);
+                    GUIUtility.ExitGUI();
+                }
+                GUI.enabled = true;
+
+                // Delete Step
+                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+                if (GUILayout.Button("X", GUILayout.Width(25)))
+                {
+                    tool.RemoveStepAt(i);
+                    GUI.backgroundColor = Color.white;
+                    GUIUtility.ExitGUI();
+                }
+                GUI.backgroundColor = Color.white;
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            EditorGUILayout.EndScrollView();
+        }
+
+        GUILayout.Space(5);
+        EditorGUILayout.BeginHorizontal();
+
+        // Add Draw Pile Step button
+        GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
+        if (GUILayout.Button("+ Add Draw Pile Step", GUILayout.Height(26)))
+        {
+            tool.AddDrawPileStep();
+        }
+
+        // Add Selected Card as Step button
+        if (GUILayout.Button("+ Add Selected Card Step", GUILayout.Height(26)))
+        {
+            if (Selection.activeGameObject != null)
+            {
+                CardGizmo selGizmo = Selection.activeGameObject.GetComponent<CardGizmo>();
+                if (selGizmo != null)
+                {
+                    tool.AddCardStep(selGizmo);
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Notice", "Selected GameObject does not have a CardGizmo component.", "OK");
+                }
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("Notice", "Please select a card in the scene first.", "OK");
+            }
+        }
+        GUI.backgroundColor = Color.white;
+
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(3);
+        EditorGUILayout.BeginHorizontal();
+
+        if (GUILayout.Button("Sync & Auto-Count Steps", GUILayout.Height(24)))
+        {
+            tool.SyncTutorialSteps();
+        }
+
+        GUI.backgroundColor = new Color(1f, 0.7f, 0.7f);
+        if (GUILayout.Button("Clear All Steps", GUILayout.Height(24)))
+        {
+            if (EditorUtility.DisplayDialog("Clear Steps", "Are you sure you want to clear all tutorial steps?", "Yes", "No"))
+            {
+                tool.ClearTutorialSteps();
+            }
+        }
+        GUI.backgroundColor = Color.white;
+
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.EndVertical();
+    }
+
     private void CenterMap(TutorialMapTool tool)
     {
-        CardGizmo[] allGizmos = tool.GetComponentsInChildren<CardGizmo>();
-        System.Collections.Generic.List<CardGizmo> canvasCards = new System.Collections.Generic.List<CardGizmo>();
-        
-        foreach (var gizmo in allGizmos)
-        {
-            if (tool.checkCardObj != null && gizmo.transform.IsChildOf(tool.checkCardObj.transform)) continue;
-            if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
-            if (gizmo.GetComponent<TutorialCheckCard>() != null || gizmo.gameObject.name == "CheckCardData") continue;
+        CardGizmo[] gizmos = tool.GetComponentsInChildren<CardGizmo>();
+        if (gizmos.Length == 0) return;
 
-            canvasCards.Add(gizmo);
+        Undo.RegisterFullObjectHierarchyUndo(tool.gameObject, "Center Canvas");
+
+        float minX = float.MaxValue;
+        float maxX = float.MinValue;
+        float minY = float.MaxValue;
+        float maxY = float.MinValue;
+
+        int validCount = 0;
+        foreach (var g in gizmos)
+        {
+            if (tool.checkCardObj != null && g.transform.IsChildOf(tool.checkCardObj.transform)) continue;
+            if (tool.drawPileObj != null && g.transform.IsChildOf(tool.drawPileObj.transform)) continue;
+            if (g.GetComponent<TutorialCheckCard>() != null || g.gameObject.name == "CheckCardData") continue;
+
+            validCount++;
+            Vector3 pos = g.transform.position;
+            if (pos.x < minX) minX = pos.x;
+            if (pos.x > maxX) maxX = pos.x;
+            if (pos.y < minY) minY = pos.y;
+            if (pos.y > maxY) maxY = pos.y;
         }
 
-        if (canvasCards.Count == 0)
+        if (validCount == 0) return;
+
+        Vector2 center = new Vector2((minX + maxX) / 2f, (minY + maxY) / 2f);
+        Vector3 offset = new Vector3(center.x - tool.transform.position.x, center.y - tool.transform.position.y, 0);
+
+        foreach (var g in gizmos)
         {
-            Debug.LogWarning("No cards found in canvas! Cannot determine map center.");
-            return;
+            if (tool.checkCardObj != null && g.transform.IsChildOf(tool.checkCardObj.transform)) continue;
+            if (tool.drawPileObj != null && g.transform.IsChildOf(tool.drawPileObj.transform)) continue;
+            if (g.GetComponent<TutorialCheckCard>() != null || g.gameObject.name == "CheckCardData") continue;
+
+            g.transform.position -= offset;
         }
 
-        Vector3 min = new Vector3(float.MaxValue, float.MaxValue, 0);
-        Vector3 max = new Vector3(float.MinValue, float.MinValue, 0);
-
-        foreach (var card in canvasCards)
-        {
-            Vector3 localPos = tool.transform.InverseTransformPoint(card.transform.position);
-            if (localPos.x < min.x) min.x = localPos.x;
-            if (localPos.x > max.x) max.x = localPos.x;
-            if (localPos.y < min.y) min.y = localPos.y;
-            if (localPos.y > max.y) max.y = localPos.y;
-        }
-
-        Vector3 center = (min + max) / 2f;
-
-        if (center.sqrMagnitude < 0.0001f)
-        {
-            Debug.Log("Map is already centered.");
-            return;
-        }
-
-        System.Collections.Generic.List<Transform> transformsToMove = new System.Collections.Generic.List<Transform>();
-        foreach (var card in canvasCards)
-        {
-            transformsToMove.Add(card.transform);
-        }
-        Undo.RecordObjects(transformsToMove.ToArray(), "Center Map");
-
-        foreach (var card in canvasCards)
-        {
-            card.transform.localPosition -= center;
-        }
-
-        Debug.Log($"Map centered! Applied offset: {-center}");
-        SceneView.RepaintAll();
+        EditorUtility.SetDirty(tool);
     }
 
     private void ClearChildren(Transform t)
@@ -273,13 +413,11 @@ public class TutorialMapToolEditor : Editor
             Undo.DestroyObjectImmediate(childObj);
         }
         
-        // Use standard tool defaults when clearing
+        // Reset tutorial steps on canvas
         if (tool != null) 
         {
-            var defaultLevel = new TutorialLevelData();
-            defaultLevel.checkCardData = new TutorialCheckCardData { id = "check-0", type = "normal", suit = "spade", rank = 4 };
-            defaultLevel.drawPileData = new TutorialDrawPileData { count = 10, fixedCards = new System.Collections.Generic.List<TutorialFixedCard>() };
-            UnityEditor.TutorialDataHelper.GenerateExtraObjects(tool, defaultLevel);
+            tool.tutorialSteps.Clear();
+            tool.SyncTutorialSteps();
         }
     }
 
@@ -300,7 +438,9 @@ public class TutorialMapToolEditor : Editor
         {
             if (tool.cardSpriteData != null) gizmo.spriteData = tool.cardSpriteData;
             gizmo.showFaceDetails = true;
+            gizmo.tutorialStep = 0;
             gizmo.UpdateVisuals();
+            gizmo.UpdateSorting();
         }
         
         Selection.activeGameObject = newCard;
@@ -320,18 +460,17 @@ public class TutorialMapToolEditor : Editor
             CenterMap(tool);
         }
 
-        int targetId = 0;
+        int targetId = 1;
         if (string.IsNullOrEmpty(tool.targetLevelId))
         {
             int maxId = 0;
-            foreach (var l in tool.loadedLevels)
+            foreach (var lvl in tool.loadedLevels)
             {
-                if (l.id > maxId) maxId = l.id;
+                if (lvl.id > maxId) maxId = lvl.id;
             }
             targetId = maxId + 1;
             tool.targetLevelId = targetId.ToString();
             tool.UpdateLevelText();
-            EditorUtility.SetDirty(tool);
         }
         else
         {
@@ -342,9 +481,9 @@ public class TutorialMapToolEditor : Editor
             }
         }
 
-        var levelList = new System.Collections.Generic.List<TutorialLevelData>(tool.loadedLevels);
+        List<TutorialLevelData> levelList = new List<TutorialLevelData>(tool.loadedLevels);
         TutorialLevelData existingLevel = levelList.Find(l => l.id == targetId);
-        
+
         if (existingLevel == null)
         {
             if (EditorUtility.DisplayDialog("New Level", $"Level ID '{targetId}' not found in JSON. Add as new?", "Yes", "No"))
@@ -355,12 +494,12 @@ public class TutorialMapToolEditor : Editor
                     type = tool.targetType,
                     mode = tool.targetMode,
                     difficulty = tool.targetDifficulty,
-                    manualConfig = new ManualConfig { cards = new System.Collections.Generic.List<TutorialCardData>() },
+                    manualConfig = new ManualConfig { cards = new List<TutorialCardData>() },
                     checkCardData = new TutorialCheckCardData { id = "check-0", type = "normal", suit = "spade", rank = 4 },
                     drawPileData = new TutorialDrawPileData 
                     { 
                         count = 10,
-                        fixedCards = new System.Collections.Generic.List<TutorialFixedCard>()
+                        fixedCards = new List<TutorialFixedCard>()
                     }
                 };
                 levelList.Add(existingLevel);
@@ -376,63 +515,92 @@ public class TutorialMapToolEditor : Editor
 
             if (existingLevel.manualConfig == null) 
             {
-                existingLevel.manualConfig = new ManualConfig { cards = new System.Collections.Generic.List<TutorialCardData>() };
+                existingLevel.manualConfig = new ManualConfig { cards = new List<TutorialCardData>() };
             }
         }
 
-        if (tool.targetType == "tutorial" && existingLevel.tutorialConfig == null)
-        {
-            existingLevel.tutorialConfig = new TutorialConfig 
-            {
-                instructions = new System.Collections.Generic.List<TutorialInstruction> 
-                {
-                    new TutorialInstruction { type = "tap_card", cardId = 2 },
-                    new TutorialInstruction { type = "tap_drawpile", cardId = 0 }
-                }
-            };
-        }
-        else if (tool.targetType != "tutorial")
-        {
-            // Nullify tutorial config if it's not tutorial type
-            existingLevel.tutorialConfig = null;
-        }
-
-        System.Collections.Generic.List<TutorialCardData> cards = new System.Collections.Generic.List<TutorialCardData>();
+        // Export Canvas Cards
+        List<TutorialCardData> cards = new List<TutorialCardData>();
         CardGizmo[] gizmos = tool.GetComponentsInChildren<CardGizmo>();
-        
-        int cardIdCounter = 1;
+
+        int cardIndexCounter = 0;
         foreach (var gizmo in gizmos)
         {
             if (tool.checkCardObj != null && gizmo.transform.IsChildOf(tool.checkCardObj.transform)) continue;
             if (tool.drawPileObj != null && gizmo.transform.IsChildOf(tool.drawPileObj.transform)) continue;
             if (gizmo.GetComponent<TutorialCheckCard>() != null || gizmo.gameObject.name == "CheckCardData") continue;
-            Vector3 localPos = tool.transform.InverseTransformPoint(gizmo.transform.position);
-            float angle = gizmo.transform.localEulerAngles.z;
-            if (angle > 180) angle -= 360f;
 
-            cards.Add(new TutorialCardData()
-            {
-                id = cardIdCounter,
-                type = CardGizmo.TypeToString(gizmo.type),
-                suit = gizmo.suit.ToString().ToLower(),
-                rank = (int)gizmo.rank + 1,
-                obstacle = CardGizmo.ObstacleToString(gizmo.obstacle),
-                x = Mathf.Round(localPos.x * tool.positionMultiplier * 100f) / 100f,
-                y = Mathf.Round((tool.invertY ? -localPos.y : localPos.y) * tool.positionMultiplier * 100f) / 100f,
-                angle = Mathf.Round((tool.invertAngle ? -angle : angle) * 100f) / 100f,
-                layer = gizmo.layer
-            });
-            cardIdCounter++;
+            TutorialCardData cData = new TutorialCardData();
+            cData.id = cardIndexCounter;
+            gizmo.cardId = cardIndexCounter;
+            cardIndexCounter++;
+
+            cData.type = CardGizmo.TypeToString(gizmo.type);
+            cData.suit = gizmo.suit.ToString().ToLower();
+            cData.rank = (int)gizmo.rank + 1;
+            cData.obstacle = CardGizmo.ObstacleToString(gizmo.obstacle);
+
+            cData.x = Mathf.Round(gizmo.transform.localPosition.x * tool.positionMultiplier);
+            float calcY = gizmo.transform.localPosition.y * tool.positionMultiplier;
+            cData.y = Mathf.Round(tool.invertY ? -calcY : calcY);
+
+            float calcAngle = gizmo.transform.localEulerAngles.z;
+            cData.angle = Mathf.Round(tool.invertAngle ? -calcAngle : calcAngle);
+            cData.layer = -Mathf.RoundToInt(gizmo.transform.localPosition.z);
+
+            cards.Add(cData);
         }
-
         existingLevel.manualConfig.cards = cards;
 
-        UnityEditor.TutorialDataHelper.SaveExtraObjects(tool, existingLevel);
+        // Export Tutorial Config Instructions
+        if (existingLevel.type == "tutorial")
+        {
+            if (existingLevel.tutorialConfig == null) 
+            {
+                existingLevel.tutorialConfig = new TutorialConfig();
+            }
+            existingLevel.tutorialConfig.instructions = new List<TutorialInstruction>();
+
+            for (int i = 0; i < tool.tutorialSteps.Count; i++)
+            {
+                var step = tool.tutorialSteps[i];
+                if (step.stepType == TutorialStepType.TapCard && step.targetCard != null)
+                {
+                    existingLevel.tutorialConfig.instructions.Add(new TutorialInstruction 
+                    { 
+                        type = "tap_card", 
+                        cardId = step.targetCard.cardId 
+                    });
+                }
+                else if (step.stepType == TutorialStepType.TapDrawPile)
+                {
+                    existingLevel.tutorialConfig.instructions.Add(new TutorialInstruction 
+                    { 
+                        type = "tap_drawpile", 
+                        cardId = 0 
+                    });
+                }
+            }
+        }
+        else
+        {
+            existingLevel.tutorialConfig = new TutorialConfig 
+            { 
+                instructions = new List<TutorialInstruction>() 
+            };
+        }
+
+        TutorialDataHelper.AutoResolveReferences(tool);
+        TutorialDataHelper.SaveExtraObjects(tool, existingLevel);
 
         SaveJSONs(tool);
         
-        Debug.Log($"Level '{targetId}' overridden & saved successfully with {cards.Count} cards!");
-        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!", "OK");
+        int dpCardsCount = existingLevel.drawPileData?.fixedCards != null ? existingLevel.drawPileData.fixedCards.Count : 0;
+        int dpTotalCount = existingLevel.drawPileData != null ? existingLevel.drawPileData.count : 0;
+        string checkCardStr = existingLevel.checkCardData != null ? $"{existingLevel.checkCardData.rank} of {existingLevel.checkCardData.suit}" : "none";
+
+        Debug.Log($"Level '{targetId}' saved successfully! Canvas cards: {cards.Count}, Tutorial steps: {existingLevel.tutorialConfig.instructions.Count}, DrawPile fixed: {dpCardsCount} (total: {dpTotalCount}), CheckCard: {checkCardStr}");
+        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}\n• Canvas Cards: {cards.Count}\n• Tutorial Steps: {existingLevel.tutorialConfig.instructions.Count}", "OK");
     }
 
     private void SaveJSONs(TutorialMapTool tool)
@@ -500,6 +668,8 @@ public class TutorialMapToolEditor : Editor
             Undo.DestroyObjectImmediate(childObj);
         }
 
+        Dictionary<int, CardGizmo> idToGizmo = new Dictionary<int, CardGizmo>();
+
         if (level.manualConfig == null || level.manualConfig.cards == null)
         {
             Debug.LogWarning($"Level {level.id} has no cards inside manualConfig.");
@@ -530,49 +700,75 @@ public class TutorialMapToolEditor : Editor
                 CardGizmo gizmo = cardGo.GetComponent<CardGizmo>();
                 if (gizmo != null)
                 {
-                    gizmo.layer = cardData.layer;
-                    gizmo.suit = ParseSuit(cardData.suit);
-                    
-                    int rankIdx = cardData.rank - 1;
-                    rankIdx = Mathf.Clamp(rankIdx, 0, 12);
-                    gizmo.rank = (CardRank)rankIdx;
+                    gizmo.cardId = cardData.id;
+                    gizmo.suit = TutorialCheckCard.ParseSuit(cardData.suit);
+                    gizmo.rank = (CardRank)Mathf.Clamp(cardData.rank - 1, 0, 12);
                     gizmo.type = CardGizmo.ParseType(cardData.type);
                     gizmo.obstacle = CardGizmo.ParseObstacle(cardData.obstacle);
-                    
+                    gizmo.layer = cardData.layer;
+                    gizmo.showFaceDetails = true;
+                    gizmo.tutorialStep = 0;
+
                     if (tool.cardSpriteData != null)
                     {
                         gizmo.spriteData = tool.cardSpriteData;
                     }
-                    
-                    gizmo.showFaceDetails = true;
+
                     gizmo.UpdateVisuals();
                     gizmo.UpdateSorting();
+                    idToGizmo[cardData.id] = gizmo;
                 }
             }
         }
 
-        UnityEditor.TutorialDataHelper.GenerateExtraObjects(tool, level);
+        // Generate Draw Pile and Check Card
+        TutorialDataHelper.GenerateExtraObjects(tool, level);
 
-        Selection.activeGameObject = tool.gameObject;
-        tool.targetLevelId = level.id.ToString();
-        tool.targetType = string.IsNullOrEmpty(level.type) ? "tutorial" : level.type;
-        tool.targetMode = string.IsNullOrEmpty(level.mode) ? "classic" : level.mode;
-        tool.targetDifficulty = string.IsNullOrEmpty(level.difficulty) ? "easy" : level.difficulty;
-        tool.UpdateLevelText();
-        EditorUtility.SetDirty(tool);
-        Debug.Log($"Generated Level {level.id} [{tool.targetType}] in scene.");
-    }
-
-    private CardSuit ParseSuit(string suitStr)
-    {
-        if (string.IsNullOrEmpty(suitStr)) return CardSuit.Heart;
-        switch (suitStr.ToLower())
+        // Load Tutorial Config Instructions into tool.tutorialSteps
+        tool.tutorialSteps.Clear();
+        if (level.type == "tutorial" && level.tutorialConfig != null && level.tutorialConfig.instructions != null)
         {
-            case "heart": return CardSuit.Heart;
-            case "spade": return CardSuit.Spade;
-            case "diamond": return CardSuit.Diamond;
-            case "club": return CardSuit.Club;
-            default: return CardSuit.Heart;
+            foreach (var inst in level.tutorialConfig.instructions)
+            {
+                if (inst.type == "tap_card")
+                {
+                    if (idToGizmo.TryGetValue(inst.cardId, out CardGizmo targetGizmo))
+                    {
+                        tool.tutorialSteps.Add(new TutorialStepItem
+                        {
+                            stepType = TutorialStepType.TapCard,
+                            targetCard = targetGizmo,
+                            cardId = inst.cardId
+                        });
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Instruction target cardId {inst.cardId} not found in generated cards.");
+                    }
+                }
+                else if (inst.type == "tap_drawpile")
+                {
+                    tool.tutorialSteps.Add(new TutorialStepItem
+                    {
+                        stepType = TutorialStepType.TapDrawPile,
+                        targetCard = null,
+                        cardId = 0
+                    });
+                }
+            }
         }
+
+        // Sync step badges on cards and scene
+        tool.SyncTutorialSteps();
+
+        tool.targetLevelId = level.id.ToString();
+        tool.targetType = level.type;
+        tool.targetDifficulty = level.difficulty;
+        tool.targetMode = level.mode;
+        tool.UpdateLevelText();
+
+        EditorUtility.SetDirty(tool);
+        SceneView.RepaintAll();
+        Debug.Log($"Generated Level {level.id} into scene successfully with {tool.tutorialSteps.Count} tutorial steps.");
     }
 }
