@@ -41,9 +41,6 @@ public class CardGizmoEditor : Editor
         }
         GUILayout.EndHorizontal();
 
-        // Chỉ hiển thị các nút chọn Suit và Rank nếu đang bật chế độ Show Face (hoặc bạn có thể chọn luôn hiển thị)
-        // Dưới đây cho phép luôn hiển thị các nút bất kể trạng thái ẩn/hiện để dễ config trước.
-        
         // Suit Property with +/-
         DrawEnumProp("Suit", suitProp);
 
@@ -58,35 +55,166 @@ public class CardGizmoEditor : Editor
 
         serializedObject.ApplyModifiedProperties();
 
+        DrawTutorialStepSection();
+
         GUILayout.Space(10);
         DrawDefaultInspector();
     }
 
+    private void DrawTutorialStepSection()
+    {
+        CardGizmo firstGizmo = (CardGizmo)target;
+        if (firstGizmo == null) return;
+
+        TutorialDrawPile pile = firstGizmo.GetComponentInParent<TutorialDrawPile>();
+        if (pile != null)
+        {
+            GUILayout.Space(10);
+            EditorGUILayout.HelpBox($"This card is inside Draw Pile ({firstGizmo.gameObject.name}). Changes to its Suit/Rank/Type will automatically save to DrawPile data. To trigger this in tutorial steps, use '+ Add Draw Pile' in Tutorial Map Tool.", MessageType.Info);
+            if (GUILayout.Button("Select Draw Pile Parent"))
+            {
+                Selection.activeGameObject = pile.gameObject;
+            }
+            return;
+        }
+
+        TutorialCheckCard checkCard = firstGizmo.GetComponentInParent<TutorialCheckCard>();
+        if (checkCard != null)
+        {
+            GUILayout.Space(10);
+            EditorGUILayout.HelpBox("This card is the Check Card (Foundation starting card). Changes will automatically save to CheckCard data.", MessageType.Info);
+            if (GUILayout.Button("Select Check Card Parent"))
+            {
+                Selection.activeGameObject = checkCard.gameObject;
+            }
+            return;
+        }
+
+        TutorialMapTool tool = firstGizmo.GetTutorialMapTool();
+        if (tool == null) return;
+
+        GUILayout.Space(10);
+        EditorGUILayout.LabelField("Tutorial Step Configuration:", EditorStyles.boldLabel);
+        EditorGUILayout.BeginVertical("helpbox");
+
+        if (targets.Length == 1)
+        {
+            if (firstGizmo.tutorialStep > 0)
+            {
+                EditorGUILayout.HelpBox($"This card is Step #{firstGizmo.tutorialStep} of {tool.tutorialSteps.Count} in Tutorial Sequence", MessageType.Info);
+
+                EditorGUILayout.BeginHorizontal();
+                GUI.enabled = firstGizmo.tutorialStep > 1;
+                if (GUILayout.Button("▲ Step Earlier", GUILayout.Height(26)))
+                {
+                    int curIdx = firstGizmo.tutorialStep - 1;
+                    tool.MoveStep(curIdx, curIdx - 1);
+                }
+                GUI.enabled = firstGizmo.tutorialStep < tool.tutorialSteps.Count;
+                if (GUILayout.Button("▼ Step Later", GUILayout.Height(26)))
+                {
+                    int curIdx = firstGizmo.tutorialStep - 1;
+                    tool.MoveStep(curIdx, curIdx + 1);
+                }
+                GUI.enabled = true;
+                EditorGUILayout.EndHorizontal();
+
+                GUILayout.Space(3);
+                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+                if (GUILayout.Button("Remove From Tutorial Steps", GUILayout.Height(26)))
+                {
+                    tool.RemoveCardStep(firstGizmo);
+                }
+                GUI.backgroundColor = Color.white;
+            }
+            else
+            {
+                int nextStep = tool.GetNextStepNumber();
+                GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
+                if (GUILayout.Button($"+ Set as Next Step (Step #{nextStep})", GUILayout.Height(34)))
+                {
+                    tool.AddCardStep(firstGizmo);
+                }
+                GUI.backgroundColor = Color.white;
+            }
+
+            GUILayout.Space(4);
+            EditorGUILayout.BeginHorizontal();
+            int newStep = EditorGUILayout.IntField("Set Specific Step #", firstGizmo.tutorialStep);
+            if (GUILayout.Button("Apply", GUILayout.Width(60)))
+            {
+                if (newStep <= 0)
+                    tool.RemoveCardStep(firstGizmo);
+                else
+                    tool.SetCardStep(firstGizmo, newStep);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        else
+        {
+            EditorGUILayout.LabelField($"Selected {targets.Length} cards", EditorStyles.miniBoldLabel);
+
+            GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
+            if (GUILayout.Button($"+ Assign Steps to Selected Cards (in order)", GUILayout.Height(34)))
+            {
+                foreach (var obj in targets)
+                {
+                    CardGizmo g = (CardGizmo)obj;
+                    if (g != null)
+                    {
+                        tool.AddCardStep(g);
+                    }
+                }
+            }
+
+            GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+            if (GUILayout.Button("Remove Selected Cards from Steps", GUILayout.Height(26)))
+            {
+                foreach (var obj in targets)
+                {
+                    CardGizmo g = (CardGizmo)obj;
+                    if (g != null)
+                    {
+                        tool.RemoveCardStep(g);
+                    }
+                }
+            }
+            GUI.backgroundColor = Color.white;
+        }
+
+        EditorGUILayout.EndVertical();
+    }
+
     private void DrawEnumProp(string label, SerializedProperty prop)
     {
-        if (prop == null) return;
-        
         GUILayout.BeginHorizontal("box");
-        
-        string displayValue = "Mixed...";
-        if (!prop.hasMultipleDifferentValues && prop.enumValueIndex >= 0 && prop.enumValueIndex < prop.enumDisplayNames.Length)
+        GUILayout.Label(label, EditorStyles.boldLabel, GUILayout.Width(80));
+
+        if (GUILayout.Button("-", GUILayout.Width(35), GUILayout.Height(20)))
         {
-            displayValue = prop.enumDisplayNames[prop.enumValueIndex];
+            if (prop.enumValueIndex > 0)
+            {
+                prop.enumValueIndex--;
+            }
+            else
+            {
+                prop.enumValueIndex = prop.enumDisplayNames.Length - 1;
+            }
         }
 
-        GUILayout.Label(label + ": " + displayValue, EditorStyles.boldLabel, GUILayout.Width(100));
+        EditorGUILayout.PropertyField(prop, GUIContent.none);
 
-        if (GUILayout.Button("-", GUILayout.Width(40), GUILayout.Height(25)))
+        if (GUILayout.Button("+", GUILayout.Width(35), GUILayout.Height(20)))
         {
-            int maxIndex = prop.enumNames.Length - 1;
-            prop.enumValueIndex = prop.enumValueIndex <= 0 ? maxIndex : prop.enumValueIndex - 1;
+            if (prop.enumValueIndex < prop.enumDisplayNames.Length - 1)
+            {
+                prop.enumValueIndex++;
+            }
+            else
+            {
+                prop.enumValueIndex = 0;
+            }
         }
-        if (GUILayout.Button("+", GUILayout.Width(40), GUILayout.Height(25)))
-        {
-            int maxIndex = prop.enumNames.Length - 1;
-            prop.enumValueIndex = prop.enumValueIndex >= maxIndex ? 0 : prop.enumValueIndex + 1;
-        }
-
         GUILayout.EndHorizontal();
     }
 }

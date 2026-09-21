@@ -10,6 +10,11 @@ public class CardGizmo : MonoBehaviour
     [Header("Export Settings")] [HideInInspector]
     public int layer = 0;
 
+    [Header("Tutorial Settings")]
+    public int tutorialStep = 0;
+    [HideInInspector]
+    public int cardId = 0;
+
     [Header("Card Visual Auto-Update")]
     public CardSpriteData spriteData;
     public bool showFaceDetails = false;
@@ -42,6 +47,13 @@ public class CardGizmo : MonoBehaviour
     private CardObstacle _lastObstacle = (CardObstacle)(-1);
     private CardSpriteData _lastSpriteData;
     private bool _lastShowFaceDetails = true;
+
+    public TutorialMapTool GetTutorialMapTool()
+    {
+        TutorialMapTool tool = GetComponentInParent<TutorialMapTool>();
+        if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
+        return tool;
+    }
 
     private void Update()
     {
@@ -80,8 +92,8 @@ public class CardGizmo : MonoBehaviour
             }
         }
 
-        // Auto-generate name based on sibling index to avoid manual renaming
-        if (transform.parent != null)
+        // Auto-generate name based on sibling index to avoid manual renaming (only for canvas / shape cards, not drawpile or checkcard)
+        if (transform.parent != null && GetComponentInParent<TutorialDrawPile>() == null && GetComponentInParent<TutorialCheckCard>() == null)
         {
             string expectedName = "card_" + transform.GetSiblingIndex();
             if (gameObject.name != expectedName && !gameObject.name.EndsWith("(Clone)"))
@@ -117,8 +129,7 @@ public class CardGizmo : MonoBehaviour
         _lastSpriteData = spriteData;
         _lastShowFaceDetails = showFaceDetails;
 
-        bool isNormal = type == CardType.Normal || type == CardType.Extra; // Extra might still show rank? Actually let's just toggle rank based on Normal for now, or just show them if showFaceDetails is true.
-        // Wait, Joker and Key usually hide the normal face.
+        bool isNormal = type == CardType.Normal || type == CardType.Extra;
         bool showStandardFace = showFaceDetails && (type == CardType.Normal);
 
         if (rankRenderer != null)
@@ -221,4 +232,25 @@ public class CardGizmo : MonoBehaviour
     {
         return o.ToString().ToLower();
     }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        if (tutorialStep > 0)
+        {
+            Vector3 pos = transform.position + Vector3.up * 0.7f;
+            UnityEditor.Handles.color = new Color(1f, 0.5f, 0f, 0.9f);
+            UnityEditor.Handles.DrawSolidDisc(pos, Vector3.forward, 0.35f);
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.DrawWireDisc(pos, Vector3.forward, 0.35f);
+
+            GUIStyle style = new GUIStyle();
+            style.normal.textColor = Color.white;
+            style.fontSize = 13;
+            style.fontStyle = FontStyle.Bold;
+            style.alignment = TextAnchor.MiddleCenter;
+            UnityEditor.Handles.Label(pos, $"{tutorialStep}", style);
+        }
+    }
+#endif
 }
