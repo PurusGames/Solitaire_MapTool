@@ -7,16 +7,24 @@ using System.Linq;
 [CustomEditor(typeof(MapTool))]
 public class MapToolEditor : Editor
 {
-
     private Vector2 scrollPos;
+
     [System.Serializable]
-    private class ArrayWrapper<T>
+    public class ArrayWrapper<T>
     {
         public T[] Items;
     }
 
     public override void OnInspectorGUI()
     {
+        GUI.backgroundColor = new Color(0.3f, 0.75f, 1f);
+        if (GUILayout.Button("⧉ Open Map Tool Tab (Dockable Window)", GUILayout.Height(32)))
+        {
+            MapToolWindow.ShowWindow();
+        }
+        GUI.backgroundColor = Color.white;
+        GUILayout.Space(8);
+
         serializedObject.Update();
         SerializedProperty prop = serializedObject.GetIterator();
         bool enterChildren = true;
@@ -115,17 +123,7 @@ public class MapToolEditor : Editor
             GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
             if (GUILayout.Button("Add New Shape to Map", GUILayout.Height(30)))
             {
-                if (tool.shapePrefab != null)
-                {
-                    GameObject newShape = (GameObject)PrefabUtility.InstantiatePrefab(tool.shapePrefab);
-                    newShape.transform.SetParent(mapTpl.transform, false);
-                    newShape.name = "new_shape_" + (mapTpl.transform.childCount);
-                    Selection.activeGameObject = newShape;
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Error", "Missing Shape Prefab in MapTool!", "OK");
-                }
+                AddNewShape(tool, mapTpl);
             }
             GUI.backgroundColor = Color.white;
 
@@ -146,8 +144,9 @@ public class MapToolEditor : Editor
         }
     }
 
-    private void LoadJSONs(MapTool tool)
+    public static void LoadJSONs(MapTool tool)
     {
+        if (tool == null) return;
         if (string.IsNullOrEmpty(tool.mapsJsonPath) || !File.Exists(tool.mapsJsonPath))
         {
             EditorUtility.DisplayDialog("Error", $"Maps JSON not found at: {tool.mapsJsonPath}", "OK");
@@ -165,8 +164,9 @@ public class MapToolEditor : Editor
         Debug.Log($"Loaded {tool.loadedMaps.Length} maps.");
     }
 
-    private void CreateNewMap(MapTool tool, MapTemplate curTemplate)
+    public static void CreateNewMap(MapTool tool, MapTemplate curTemplate)
     {
+        if (tool == null || curTemplate == null) return;
         int maxId = 0;
         if (tool.loadedMaps != null)
         {
@@ -183,14 +183,36 @@ public class MapToolEditor : Editor
             }
         }
         string newMapId = "tpl_" + (maxId + 1);
+        Undo.RecordObject(curTemplate, "Create New Map");
         curTemplate.templateId = newMapId;
         ClearChildren(curTemplate.transform);
+        EditorUtility.SetDirty(curTemplate);
         SceneView.RepaintAll();
         Debug.Log($"Created empty map '{newMapId}'. You can now place Shape prefab instances inside it.");
     }
 
-    private void GenerateMapInScene(MapTool tool, MapTemplate curTemplate, MapObject mapData)
+    public static GameObject AddNewShape(MapTool tool, MapTemplate mapTpl)
     {
+        if (tool == null || mapTpl == null) return null;
+        if (tool.shapePrefab != null)
+        {
+            GameObject newShape = (GameObject)PrefabUtility.InstantiatePrefab(tool.shapePrefab);
+            Undo.RegisterCreatedObjectUndo(newShape, "Add New Shape");
+            newShape.transform.SetParent(mapTpl.transform, false);
+            newShape.name = "new_shape_" + (mapTpl.transform.childCount);
+            Selection.activeGameObject = newShape;
+            return newShape;
+        }
+        else
+        {
+            EditorUtility.DisplayDialog("Error", "Missing Shape Prefab in MapTool!", "OK");
+            return null;
+        }
+    }
+
+    public static void GenerateMapInScene(MapTool tool, MapTemplate curTemplate, MapObject mapData)
+    {
+        if (tool == null || curTemplate == null || mapData == null) return;
         if (tool.shapePrefab == null)
         {
             EditorUtility.DisplayDialog("Error", "Please assign a Shape Prefab in the MapTool.", "OK");
@@ -204,6 +226,7 @@ public class MapToolEditor : Editor
             return;
         }
 
+        Undo.RegisterFullObjectHierarchyUndo(curTemplate.gameObject, "Generate Map");
         curTemplate.templateId = mapData.id;
         ClearChildren(curTemplate.transform);
 
@@ -236,20 +259,24 @@ public class MapToolEditor : Editor
         }
 
         Selection.activeGameObject = curTemplate.gameObject;
+        EditorUtility.SetDirty(curTemplate);
+        SceneView.RepaintAll();
         // SceneView.FrameLastActiveSceneView();
         Debug.Log($"Generated map '{mapData.id}' in scene.");
     }
 
-    private void ClearChildren(Transform t)
+    public static void ClearChildren(Transform t)
     {
+        if (t == null) return;
         for (int i = t.childCount - 1; i >= 0; i--)
         {
             DestroyImmediate(t.GetChild(i).gameObject);
         }
     }
 
-    private void CenterMap(MapTemplate mt)
+    public static void CenterMap(MapTemplate mt)
     {
+        if (mt == null) return;
         CardGizmo[] cards = mt.GetComponentsInChildren<CardGizmo>();
         if (cards.Length == 0)
         {
@@ -289,8 +316,9 @@ public class MapToolEditor : Editor
         SceneView.RepaintAll();
     }
 
-    private void SaveMapToJSON(MapTool tool, MapTemplate mt)
+    public static void SaveMapToJSON(MapTool tool, MapTemplate mt)
     {
+        if (tool == null || mt == null) return;
         if (tool.loadedMaps == null)
         {
             EditorUtility.DisplayDialog("Error", "Maps not loaded! Please load JSON first.", "OK");
@@ -345,14 +373,17 @@ public class MapToolEditor : Editor
         EditorUtility.DisplayDialog("Success", $"Map '{mt.templateId}' saved successfully to JSON!", "OK");
     }
 
-    private void SaveJSONs(MapTool tool)
+    public static void SaveJSONs(MapTool tool)
     {
+        if (tool == null) return;
         string jsonArray = ToJsonArray(tool.loadedMaps);
         File.WriteAllText(tool.mapsJsonPath, jsonArray);
+        AssetDatabase.Refresh();
     }
 
-    private string ToJsonArray<T>(T[] array)
+    public static string ToJsonArray<T>(T[] array)
     {
+        if (array == null || array.Length == 0) return "[]";
         ArrayWrapper<T> wrapper = new ArrayWrapper<T> { Items = array };
         string json = JsonUtility.ToJson(wrapper, true);
         
