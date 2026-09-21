@@ -1,0 +1,217 @@
+using UnityEngine;
+using UnityEditor;
+using UnityEngine.Rendering;
+
+[InitializeOnLoad]
+public static class TutorialStepPicker
+{
+    public static bool isPicking = false;
+    public static TutorialMapTool activeTool = null;
+
+    static TutorialStepPicker()
+    {
+        SceneView.duringSceneGui -= OnSceneGUI;
+        SceneView.duringSceneGui += OnSceneGUI;
+    }
+
+    public static void StartPicking(TutorialMapTool tool)
+    {
+        if (tool == null)
+        {
+            tool = Object.FindObjectOfType<TutorialMapTool>();
+        }
+
+        if (tool == null)
+        {
+            EditorUtility.DisplayDialog("Error", "No TutorialMapTool found in scene.", "OK");
+            return;
+        }
+
+        activeTool = tool;
+        isPicking = true;
+        SceneView.RepaintAll();
+    }
+
+    public static void StopPicking()
+    {
+        isPicking = false;
+        activeTool = null;
+        SceneView.RepaintAll();
+    }
+
+    private static void OnSceneGUI(SceneView sceneView)
+    {
+        if (!isPicking || activeTool == null) return;
+
+        Event e = Event.current;
+
+        // Force passive control ID so Unity doesn't execute standard selection/manipulation
+        int controlID = GUIUtility.GetControlID(FocusType.Passive);
+        HandleUtility.AddDefaultControl(controlID);
+
+        // Change cursor to link pointer
+        EditorGUIUtility.AddCursorRect(new Rect(0, 0, sceneView.position.width, sceneView.position.height), MouseCursor.Link);
+
+        // Handle Escape to cancel
+        if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Escape)
+        {
+            StopPicking();
+            e.Use();
+            return;
+        }
+
+        // Draw top banner in SceneView
+        Handles.BeginGUI();
+        float bannerW = 400;
+        float bannerH = 55;
+        Rect rect = new Rect((sceneView.position.width - bannerW) / 2f, 15, bannerW, bannerH);
+        GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.95f);
+        GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+
+        GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 13,
+            normal = { textColor = new Color(0.3f, 1f, 0.5f) }
+        };
+        GUIStyle subStyle = new GUIStyle(EditorStyles.miniLabel)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 11,
+            normal = { textColor = new Color(0.85f, 0.85f, 0.85f) }
+        };
+
+        GUI.Label(new Rect(rect.x, rect.y + 6, bannerW, 20), "🎯 PICK CARD MODE: Click a card to add Step", titleStyle);
+        GUI.Label(new Rect(rect.x, rect.y + 27, bannerW, 20), "Click outside (empty space) or press [ESC] to Cancel", subStyle);
+        Handles.EndGUI();
+
+        // Hover highlight
+        CardGizmo hoveredCard = FindCardUnderMouse(e.mousePosition);
+        TutorialDrawPile hoveredPile = hoveredCard == null ? FindDrawPileUnderMouse(e.mousePosition) : null;
+
+        if (hoveredCard != null)
+        {
+            SpriteRenderer sr = hoveredCard.GetComponent<SpriteRenderer>();
+            Bounds b = sr != null ? sr.bounds : new Bounds(hoveredCard.transform.position, Vector3.one);
+            Handles.color = new Color(0.2f, 1f, 0.4f, 0.9f);
+            Handles.DrawWireCube(b.center, b.size * 1.05f);
+
+            bool isDrawChild = activeTool.drawPileObj != null && hoveredCard.transform.IsChildOf(activeTool.drawPileObj.transform);
+            string labelText = isDrawChild ? "Click -> Add Draw Pile Step" : $"Click -> Add Step #{activeTool.GetNextStepNumber()}: {hoveredCard.name}";
+            Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), labelText, EditorStyles.whiteBoldLabel);
+            sceneView.Repaint();
+        }
+        else if (hoveredPile != null)
+        {
+            Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
+            Handles.DrawWireCube(hoveredPile.transform.position, Vector3.one * 1.5f);
+            Handles.Label(hoveredPile.transform.position + Vector3.up * 1f, "Click -> Add Draw Pile Step", EditorStyles.whiteBoldLabel);
+            sceneView.Repaint();
+        }
+
+        // On Mouse Click
+        if (e.type == EventType.MouseDown && e.button == 0)
+        {
+            CardGizmo pickedCard = FindCardUnderMouse(e.mousePosition);
+            TutorialDrawPile pickedPile = pickedCard == null ? FindDrawPileUnderMouse(e.mousePosition) : null;
+
+            if (pickedCard != null)
+            {
+                if (activeTool.drawPileObj != null && pickedCard.transform.IsChildOf(activeTool.drawPileObj.transform))
+                {
+                    activeTool.AddDrawPileStep();
+                    Debug.Log("Added Tap Draw Pile tutorial step from DrawPile card.");
+                }
+                else if (activeTool.checkCardObj != null && pickedCard.transform.IsChildOf(activeTool.checkCardObj.transform))
+                {
+                    Debug.LogWarning("CheckCard is the foundation card and cannot be added as a tap step.");
+                }
+                else
+                {
+                    activeTool.AddCardStep(pickedCard);
+                    Selection.activeGameObject = pickedCard.gameObject;
+                    Debug.Log($"Added Tutorial Step #{pickedCard.tutorialStep} for card: {pickedCard.name}");
+                }
+                StopPicking();
+                e.Use();
+            }
+            else if (pickedPile != null)
+            {
+                activeTool.AddDrawPileStep();
+                Selection.activeGameObject = pickedPile.gameObject;
+                Debug.Log("Added Tap Draw Pile tutorial step.");
+                StopPicking();
+                e.Use();
+            }
+            else
+            {
+                // Clicked outside / empty space: Cancel picking as requested!
+                Debug.Log("Card picking cancelled (clicked outside).");
+                StopPicking();
+                e.Use();
+            }
+        }
+    }
+
+    public static CardGizmo FindCardUnderMouse(Vector2 mousePos)
+    {
+        // 1. Try HandleUtility.PickGameObject
+        GameObject picked = HandleUtility.PickGameObject(mousePos, false);
+        if (picked != null)
+        {
+            CardGizmo g = picked.GetComponentInParent<CardGizmo>();
+            if (g != null) return g;
+        }
+
+        // 2. Fallback: Raycast to 2D Sprite bounds
+        Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
+        Vector2 worldPos = ray.origin;
+
+        CardGizmo bestCard = null;
+        int highestOrder = int.MinValue;
+
+        CardGizmo[] allGizmos = Object.FindObjectsOfType<CardGizmo>();
+        foreach (var gizmo in allGizmos)
+        {
+            SpriteRenderer sr = gizmo.GetComponent<SpriteRenderer>();
+            if (sr != null && sr.bounds.Contains(worldPos))
+            {
+                int order = -Mathf.RoundToInt(gizmo.transform.localPosition.z) * 1000;
+                SortingGroup sg = gizmo.GetComponent<SortingGroup>();
+                if (sg != null) order = sg.sortingOrder;
+
+                if (order > highestOrder)
+                {
+                    highestOrder = order;
+                    bestCard = gizmo;
+                }
+            }
+        }
+
+        return bestCard;
+    }
+
+    public static TutorialDrawPile FindDrawPileUnderMouse(Vector2 mousePos)
+    {
+        GameObject picked = HandleUtility.PickGameObject(mousePos, false);
+        if (picked != null)
+        {
+            TutorialDrawPile pile = picked.GetComponentInParent<TutorialDrawPile>();
+            if (pile != null) return pile;
+        }
+
+        Ray ray = HandleUtility.GUIPointToWorldRay(mousePos);
+        Vector2 worldPos = ray.origin;
+
+        TutorialDrawPile[] allPiles = Object.FindObjectsOfType<TutorialDrawPile>();
+        foreach (var p in allPiles)
+        {
+            foreach (var sr in p.GetComponentsInChildren<SpriteRenderer>())
+            {
+                if (sr.bounds.Contains(worldPos)) return p;
+            }
+        }
+
+        return null;
+    }
+}

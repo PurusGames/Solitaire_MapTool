@@ -169,6 +169,23 @@ public class TutorialDrawPileEditor : Editor
             SceneView.RepaintAll();
         }
 
+        GUILayout.Space(6);
+        GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
+        if (GUILayout.Button("🎯 + Add Draw Pile to Tutorial Steps", GUILayout.Height(28)))
+        {
+            if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
+            if (tool != null)
+            {
+                tool.AddDrawPileStep();
+                Debug.Log("Added Tap Draw Pile tutorial step.");
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("Error", "TutorialMapTool not found in scene.", "OK");
+            }
+        }
+        GUI.backgroundColor = Color.white;
+
         EditorGUILayout.EndVertical();
     }
 }

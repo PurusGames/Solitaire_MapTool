@@ -181,7 +181,7 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
         EditorGUILayout.BeginVertical("helpbox");
         
-        if (GUILayout.Button("+ Create Empty Level", GUILayout.Height(30)))
+        if (GUILayout.Button("Create Empty Canvas (Clear)", GUILayout.Height(30)))
         {
             ClearChildren(tool.transform);
             tool.targetLevelId = "";
@@ -192,7 +192,7 @@ public class TutorialMapToolEditor : Editor
         
         GUILayout.Space(5);
         GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
-        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(30)))
+        if (GUILayout.Button("Add New Card into Canvas", GUILayout.Height(30)))
         {
             AddNewCard(tool);
         }
@@ -316,27 +316,25 @@ public class TutorialMapToolEditor : Editor
             tool.AddDrawPileStep();
         }
 
-        // Add Selected Card as Step button
-        if (GUILayout.Button("+ Add Selected Card Step", GUILayout.Height(26)))
+        // Add Card Step Button with Interactive Scene Click-to-Pick Mode
+        if (TutorialStepPicker.isPicking)
         {
-            if (Selection.activeGameObject != null)
+            GUI.backgroundColor = new Color(1f, 0.7f, 0.2f);
+            if (GUILayout.Button("❌ Cancel Picking [ESC]", GUILayout.Height(26)))
             {
-                CardGizmo selGizmo = Selection.activeGameObject.GetComponent<CardGizmo>();
-                if (selGizmo != null)
-                {
-                    tool.AddCardStep(selGizmo);
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Notice", "Selected GameObject does not have a CardGizmo component.", "OK");
-                }
+                TutorialStepPicker.StopPicking();
             }
-            else
-            {
-                EditorUtility.DisplayDialog("Notice", "Please select a card in the scene first.", "OK");
-            }
+            GUI.backgroundColor = Color.white;
         }
-        GUI.backgroundColor = Color.white;
+        else
+        {
+            GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
+            if (GUILayout.Button("🎯 + Click Card on Scene to Add Step", GUILayout.Height(26)))
+            {
+                TutorialStepPicker.StartPicking(tool);
+            }
+            GUI.backgroundColor = Color.white;
+        }
 
         EditorGUILayout.EndHorizontal();
 
