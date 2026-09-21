@@ -200,6 +200,7 @@ public class MapToolEditor : Editor
             Undo.RegisterCreatedObjectUndo(newShape, "Add New Shape");
             newShape.transform.SetParent(mapTpl.transform, false);
             newShape.name = "new_shape_" + (mapTpl.transform.childCount);
+
             Selection.activeGameObject = newShape;
             return newShape;
         }
@@ -242,7 +243,7 @@ public class MapToolEditor : Editor
             float stY = (tool.invertY ? -mapSlot.y : mapSlot.y) / tool.positionMultiplier;
             float stAngle = tool.invertAngle ? -mapSlot.angle : mapSlot.angle;
 
-            shapeGo.transform.localPosition = new Vector3(stX, stY, -mapSlot.baseLayer);
+            shapeGo.transform.localPosition = new Vector3(stX, stY, 0);
             shapeGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
 
             ShapeTemplate shapeTemplate = shapeGo.GetComponent<ShapeTemplate>();

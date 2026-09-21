@@ -450,6 +450,7 @@ public class TutorialMapToolEditor : Editor
             if (tool.cardSpriteData != null) gizmo.spriteData = tool.cardSpriteData;
             gizmo.showFaceDetails = true;
             gizmo.tutorialStep = 0;
+            gizmo.layer = 0;
             gizmo.UpdateVisuals();
             gizmo.UpdateSorting();
         }
@@ -558,7 +559,7 @@ public class TutorialMapToolEditor : Editor
 
             float calcAngle = gizmo.transform.localEulerAngles.z;
             cData.angle = Mathf.Round(tool.invertAngle ? -calcAngle : calcAngle);
-            cData.layer = -Mathf.RoundToInt(gizmo.transform.localPosition.z);
+            cData.layer = gizmo.layer;
 
             cards.Add(cData);
         }
@@ -709,7 +710,7 @@ public class TutorialMapToolEditor : Editor
                 float stY = (tool.invertY ? -cardData.y : cardData.y) / tool.positionMultiplier;
                 float stAngle = tool.invertAngle ? -cardData.angle : cardData.angle;
 
-                cardGo.transform.localPosition = new Vector3(stX, stY, -cardData.layer);
+                cardGo.transform.localPosition = new Vector3(stX, stY, 0);
                 cardGo.transform.localEulerAngles = new Vector3(0, 0, stAngle);
 
                 CardGizmo gizmo = cardGo.GetComponent<CardGizmo>();

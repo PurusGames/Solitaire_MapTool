@@ -176,7 +176,7 @@ public static class TutorialStepPicker
             SpriteRenderer sr = gizmo.GetComponent<SpriteRenderer>();
             if (sr != null && sr.bounds.Contains(worldPos))
             {
-                int order = -Mathf.RoundToInt(gizmo.transform.localPosition.z) * 1000;
+                int order = gizmo.layer * 1000;
                 SortingGroup sg = gizmo.GetComponent<SortingGroup>();
                 if (sg != null) order = sg.sortingOrder;
 

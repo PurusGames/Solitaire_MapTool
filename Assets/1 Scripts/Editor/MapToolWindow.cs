@@ -141,19 +141,13 @@ public class MapToolWindow : EditorWindow
             if (GUILayout.Button("-", GUILayout.Width(35), GUILayout.Height(22)))
             {
                 Undo.RecordObject(selShape, "Change Base Layer");
-                Undo.RecordObject(selShape.transform, "Change Base Layer");
                 selShape.baseLayer--;
-                Vector3 p = selShape.transform.localPosition;
-                selShape.transform.localPosition = new Vector3(p.x, p.y, -selShape.baseLayer);
                 EditorUtility.SetDirty(selShape);
             }
             if (GUILayout.Button("+", GUILayout.Width(35), GUILayout.Height(22)))
             {
                 Undo.RecordObject(selShape, "Change Base Layer");
-                Undo.RecordObject(selShape.transform, "Change Base Layer");
                 selShape.baseLayer++;
-                Vector3 p = selShape.transform.localPosition;
-                selShape.transform.localPosition = new Vector3(p.x, p.y, -selShape.baseLayer);
                 EditorUtility.SetDirty(selShape);
             }
 
