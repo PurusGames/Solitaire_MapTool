@@ -18,11 +18,11 @@ public class CardGizmoEditor : Editor
         GUILayout.Space(5);
 
         // show/hide rank & suit
-        GUI.backgroundColor = showFaceProp.boolValue ? Color.green : Color.gray;
-        if (GUILayout.Button(showFaceProp.boolValue ? "Show Rank & Suit" : "Hide Rank & Suit", GUILayout.Height(30)))
-        {
-            showFaceProp.boolValue = !showFaceProp.boolValue;
-        }
+        // GUI.backgroundColor = showFaceProp.boolValue ? Color.green : Color.gray;
+        // if (GUILayout.Button(showFaceProp.boolValue ? "Show Rank & Suit" : "Hide Rank & Suit", GUILayout.Height(30)))
+        // {
+        //     showFaceProp.boolValue = !showFaceProp.boolValue;
+        // }
         // return bg color
         GUI.backgroundColor = Color.white;
 
