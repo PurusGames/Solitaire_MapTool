@@ -181,7 +181,7 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
         EditorGUILayout.BeginVertical("helpbox");
         
-        if (GUILayout.Button("Create Empty Canvas (Clear)", GUILayout.Height(30)))
+        if (GUILayout.Button("+ Create Empty Level", GUILayout.Height(30)))
         {
             ClearChildren(tool.transform);
             tool.targetLevelId = "";
@@ -192,7 +192,7 @@ public class TutorialMapToolEditor : Editor
         
         GUILayout.Space(5);
         GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
-        if (GUILayout.Button("Add New Card into Canvas", GUILayout.Height(30)))
+        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(30)))
         {
             AddNewCard(tool);
         }
