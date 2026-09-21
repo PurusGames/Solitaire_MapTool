@@ -67,18 +67,11 @@ public class TutorialMapToolWindow : EditorWindow
 
         // Contextual Selected Card Banner / Pick Mode Banner
         DrawSelectedCardBanner();
-
-        // 1. Scene Canvas Actions (Add Card, Center, Clear, Save JSON)
-        DrawSceneActionsSection();
-
-        // 2. Tutorial Steps Sequence
-        DrawTutorialStepsSection();
-
-        // 3. Level JSON & Loaded Levels
+        
         DrawLevelConfigSection();
-
-        // 4. Target & Settings (At the very bottom)
         DrawAdvancedSettingsSection();
+        DrawTutorialStepsSection();
+        DrawSceneActionsSection();
 
         EditorGUILayout.Space(20);
         EditorGUILayout.EndScrollView();
@@ -200,25 +193,11 @@ public class TutorialMapToolWindow : EditorWindow
 
         EditorGUILayout.BeginVertical("helpbox");
 
-        // Add New Card
-        GUI.backgroundColor = new Color(0.7f, 0.88f, 1f);
-        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(32)))
-        {
-            TutorialMapToolEditor.AddNewCard(activeTool);
-        }
         GUI.backgroundColor = Color.white;
-
-        GUILayout.Space(3);
-        EditorGUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("Center Canvas (0,0)", GUILayout.Height(26)))
+        
+        if (GUILayout.Button("+ Create New Level", GUILayout.Height(26)))
         {
-            TutorialMapToolEditor.CenterMap(activeTool);
-        }
-
-        if (GUILayout.Button("Clear Canvas (Empty)", GUILayout.Height(26)))
-        {
-            if (EditorUtility.DisplayDialog("Clear Canvas", "Clear all cards from canvas?", "Yes", "No"))
+            if (EditorUtility.DisplayDialog("+ Create New Level", "Clear all cards from level?", "Yes", "No"))
             {
                 TutorialMapToolEditor.ClearChildren(activeTool.transform);
                 activeTool.targetLevelId = "";
@@ -227,9 +206,21 @@ public class TutorialMapToolWindow : EditorWindow
                 SceneView.RepaintAll();
             }
         }
-        EditorGUILayout.EndHorizontal();
+        
+        // Add New Card
+        GUI.backgroundColor = new Color(0.7f, 0.88f, 1f);
+        if (GUILayout.Button("+ Add New Card into Canvas", GUILayout.Height(32)))
+        {
+            TutorialMapToolEditor.AddNewCard(activeTool);
+        }
+        
+        GUI.backgroundColor = Color.white;
+        if (GUILayout.Button("Center Canvas (0,0)", GUILayout.Height(26)))
+        {
+            TutorialMapToolEditor.CenterMap(activeTool);
+        }
 
-        GUILayout.Space(6);
+
 
         // Save Button
         GUI.backgroundColor = new Color(0.55f, 0.92f, 0.55f);
