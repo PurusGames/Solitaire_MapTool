@@ -45,6 +45,8 @@ MonoBehaviour:
   clubSprite: {fileID: 21300000, guid: a67ce7bb996ae438cbee0a69132a77f2, type: 3}
   spadeSprite: {fileID: 21300000, guid: c594a7724f2744947a11917b0ce294fe, type: 3}
   jokerSprite: {fileID: 21300000, guid: a7dee9f6bc7a85441958951f4db877c2, type: 3}
-  extraSprite: {fileID: 21300000, guid: bd49d58cbba804d808578a8119508307, type: 3}
-  keySprite: {fileID: 21300000, guid: 77c9a7aefd796486dbb7b29220dfa3fa, type: 3}
-  lockedSprite: {fileID: 21300000, guid: 6387d8b89839741bb86704429a8a70ac, type: 3}
+  extraPlus5Sprite: {fileID: 21300000, guid: 6df6b552678d4c042ba379d527d6a078, type: 3}
+  extraPlus2Sprite: {fileID: 21300000, guid: 01a5e939de8304941807a889420a1eb1, type: 3}
+  extraPlus3Sprite: {fileID: 21300000, guid: a69da078d4dbaa64081aded277097afa, type: 3}
+  keySprite: {fileID: 21300000, guid: 21100014f7e598e4d8d550f45a884476, type: 3}
+  lockedSprite: {fileID: 21300000, guid: 19a509373f3801d4bbacfe54a062f793, type: 3}
