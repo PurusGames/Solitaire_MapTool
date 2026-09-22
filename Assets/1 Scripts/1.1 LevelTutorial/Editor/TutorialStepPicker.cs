@@ -62,7 +62,7 @@ public static class TutorialStepPicker
 
         // Draw top banner in SceneView
         Handles.BeginGUI();
-        float bannerW = 400;
+        float bannerW = 440;
         float bannerH = 55;
         Rect rect = new Rect((sceneView.position.width - bannerW) / 2f, 15, bannerW, bannerH);
         GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.95f);
@@ -81,8 +81,8 @@ public static class TutorialStepPicker
             normal = { textColor = new Color(0.85f, 0.85f, 0.85f) }
         };
 
-        GUI.Label(new Rect(rect.x, rect.y + 6, bannerW, 20), "🎯 PICK CARD MODE: Click a card to add Step", titleStyle);
-        GUI.Label(new Rect(rect.x, rect.y + 27, bannerW, 20), "Click outside (empty space) or press [ESC] to Cancel", subStyle);
+        GUI.Label(new Rect(rect.x, rect.y + 6, bannerW, 20), "🎯 PICK MODE: Click Card to add to tap_card", titleStyle);
+        GUI.Label(new Rect(rect.x, rect.y + 27, bannerW, 20), "Click DrawPile to toggle tap_drawpile | Click outside or [ESC] to Cancel", subStyle);
         Handles.EndGUI();
 
         // Hover highlight
@@ -93,19 +93,30 @@ public static class TutorialStepPicker
         {
             SpriteRenderer sr = hoveredCard.GetComponent<SpriteRenderer>();
             Bounds b = sr != null ? sr.bounds : new Bounds(hoveredCard.transform.position, Vector3.one);
-            Handles.color = new Color(0.2f, 1f, 0.4f, 0.9f);
-            Handles.DrawWireCube(b.center, b.size * 1.05f);
 
             bool isDrawChild = activeTool.drawPileObj != null && hoveredCard.transform.IsChildOf(activeTool.drawPileObj.transform);
-            string labelText = isDrawChild ? "Click -> Add Draw Pile Step" : $"Click -> Add Step #{activeTool.GetNextStepNumber()}: {hoveredCard.name}";
-            Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), labelText, EditorStyles.whiteBoldLabel);
+            if (isDrawChild)
+            {
+                Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
+                Handles.DrawWireCube(b.center, b.size * 1.05f);
+                string dpStatus = activeTool.tapDrawPile ? "ON" : "OFF";
+                Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
+            }
+            else
+            {
+                Handles.color = new Color(0.2f, 1f, 0.4f, 0.9f);
+                Handles.DrawWireCube(b.center, b.size * 1.05f);
+                string labelText = $"Click -> Add Step #{activeTool.GetNextStepNumber()}: {hoveredCard.name}";
+                Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), labelText, EditorStyles.whiteBoldLabel);
+            }
             sceneView.Repaint();
         }
         else if (hoveredPile != null)
         {
             Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
             Handles.DrawWireCube(hoveredPile.transform.position, Vector3.one * 1.5f);
-            Handles.Label(hoveredPile.transform.position + Vector3.up * 1f, "Click -> Add Draw Pile Step", EditorStyles.whiteBoldLabel);
+            string dpStatus = activeTool.tapDrawPile ? "ON" : "OFF";
+            Handles.Label(hoveredPile.transform.position + Vector3.up * 1f, $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
             sceneView.Repaint();
         }
 
@@ -119,8 +130,8 @@ public static class TutorialStepPicker
             {
                 if (activeTool.drawPileObj != null && pickedCard.transform.IsChildOf(activeTool.drawPileObj.transform))
                 {
-                    activeTool.AddDrawPileStep();
-                    Debug.Log("Added Tap Draw Pile tutorial step from DrawPile card.");
+                    activeTool.ToggleTapDrawPile();
+                    Debug.Log($"Toggled Tutorial tap_drawpile to: {activeTool.tapDrawPile}");
                 }
                 else if (activeTool.checkCardObj != null && pickedCard.transform.IsChildOf(activeTool.checkCardObj.transform))
                 {
@@ -130,16 +141,16 @@ public static class TutorialStepPicker
                 {
                     activeTool.AddCardStep(pickedCard);
                     Selection.activeGameObject = pickedCard.gameObject;
-                    Debug.Log($"Added Tutorial Step #{pickedCard.tutorialStep} for card: {pickedCard.name}");
+                    Debug.Log($"Added Tutorial tap_card step #{pickedCard.tutorialStep} for card: {pickedCard.name}");
                 }
                 StopPicking();
                 e.Use();
             }
             else if (pickedPile != null)
             {
-                activeTool.AddDrawPileStep();
+                activeTool.ToggleTapDrawPile();
                 Selection.activeGameObject = pickedPile.gameObject;
-                Debug.Log("Added Tap Draw Pile tutorial step.");
+                Debug.Log($"Toggled Tutorial tap_drawpile to: {activeTool.tapDrawPile}");
                 StopPicking();
                 e.Use();
             }

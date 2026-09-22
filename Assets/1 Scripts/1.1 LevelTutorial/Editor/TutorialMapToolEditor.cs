@@ -41,8 +41,8 @@ public class TutorialMapToolEditor : Editor
                 continue;
             }
 
-            // Hide raw tutorialSteps property from default inspector as we render a custom UI for it
-            if (prop.name == "tutorialSteps")
+            // Hide raw tutorial fields from default inspector as we render a custom UI for it
+            if (prop.name == "tutorialSteps" || prop.name == "tapDrawPile" || prop.name == "tapUndo" || prop.name == "tapJoker")
             {
                 continue;
             }
@@ -132,16 +132,25 @@ public class TutorialMapToolEditor : Editor
                 {
                     level.type = itemTypes[newTIdx];
                     level.difficulty = itemDiffs[newDIdx];
-                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.instructions == null)) 
+                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.tap_card == null)) 
                     {
                         level.tutorialConfig = new TutorialConfig 
                         {
-                            instructions = new List<TutorialInstruction>()
+                            tap_card = new List<int>(),
+                            tap_drawpile = false,
+                            tap_undo = false,
+                            tap_joker = false
                         };
                     } 
                     else if (level.type != "tutorial") 
                     {
-                        level.tutorialConfig = new TutorialConfig { instructions = new List<TutorialInstruction>() };
+                        level.tutorialConfig = new TutorialConfig 
+                        { 
+                            tap_card = new List<int>(),
+                            tap_drawpile = false,
+                            tap_undo = false,
+                            tap_joker = false
+                        };
                     }
                     SaveJSONs(tool);
                     GUIUtility.ExitGUI();
@@ -174,7 +183,7 @@ public class TutorialMapToolEditor : Editor
             EditorGUILayout.EndVertical();
         }
 
-        // TUTORIAL STEPS SECTION
+        // TUTORIAL CONFIG & STEPS SECTION
         DrawTutorialStepsGUI(tool, ref stepScrollPos);
 
         GUILayout.Space(15);
@@ -220,14 +229,73 @@ public class TutorialMapToolEditor : Editor
         if (tool == null) return;
 
         GUILayout.Space(15);
-        EditorGUILayout.LabelField("Tutorial Steps Sequence:", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Tutorial Config (Instructions & Flags):", EditorStyles.boldLabel);
         EditorGUILayout.BeginVertical("helpbox");
 
-        EditorGUILayout.HelpBox("Order of tutorial steps shown to the player. Drag or use ▲/▼ to change order.", MessageType.None);
+        // 1. ACTION FLAGS (tap_drawpile, tap_undo, tap_joker)
+        EditorGUILayout.LabelField("Action Flags (Click to Toggle):", EditorStyles.boldLabel);
+        EditorGUILayout.BeginHorizontal();
+
+        // Tap DrawPile Button
+        Color activeGreen = new Color(0.35f, 0.88f, 0.45f);
+        Color inactiveGray = new Color(0.88f, 0.88f, 0.88f);
+
+        GUI.backgroundColor = tool.tapDrawPile ? activeGreen : inactiveGray;
+        string dpLabel = tool.tapDrawPile ? "✔ tap_drawpile: ON" : "✖ tap_drawpile: OFF";
+        if (GUILayout.Button(dpLabel, GUILayout.Height(28)))
+        {
+            Undo.RecordObject(tool, "Toggle tap_drawpile");
+            tool.ToggleTapDrawPile();
+        }
+
+        // Tap Undo Button
+        GUI.backgroundColor = tool.tapUndo ? activeGreen : inactiveGray;
+        string undoLabel = tool.tapUndo ? "✔ tap_undo: ON" : "✖ tap_undo: OFF";
+        if (GUILayout.Button(undoLabel, GUILayout.Height(28)))
+        {
+            Undo.RecordObject(tool, "Toggle tap_undo");
+            tool.ToggleTapUndo();
+        }
+
+        // Tap Joker Button
+        GUI.backgroundColor = tool.tapJoker ? activeGreen : inactiveGray;
+        string jokerLabel = tool.tapJoker ? "✔ tap_joker: ON" : "✖ tap_joker: OFF";
+        if (GUILayout.Button(jokerLabel, GUILayout.Height(28)))
+        {
+            Undo.RecordObject(tool, "Toggle tap_joker");
+            tool.ToggleTapJoker();
+        }
+
+        GUI.backgroundColor = Color.white;
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(6);
+        EditorGUILayout.BeginHorizontal();
+        EditorGUI.BeginChangeCheck();
+        bool newDp = EditorGUILayout.ToggleLeft("tap_drawpile", tool.tapDrawPile, GUILayout.Width(110));
+        bool newUndo = EditorGUILayout.ToggleLeft("tap_undo", tool.tapUndo, GUILayout.Width(100));
+        bool newJoker = EditorGUILayout.ToggleLeft("tap_joker", tool.tapJoker, GUILayout.Width(100));
+        if (EditorGUI.EndChangeCheck())
+        {
+            Undo.RecordObject(tool, "Change Tutorial Flags");
+            tool.tapDrawPile = newDp;
+            tool.tapUndo = newUndo;
+            tool.tapJoker = newJoker;
+            EditorUtility.SetDirty(tool);
+            SceneView.RepaintAll();
+        }
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(10);
+
+        // 2. TAP CARD SEQUENCE (tap_card: [1, 2, 0])
+        int cardStepCount = tool.tutorialSteps != null ? tool.tutorialSteps.Count : 0;
+        EditorGUILayout.LabelField($"tap_card Sequence ({cardStepCount} cards):", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox("Order of cards the player must tap. Use ▲/▼ to reorder.", MessageType.None);
 
         if (tool.tutorialSteps == null || tool.tutorialSteps.Count == 0)
         {
-            EditorGUILayout.LabelField("No tutorial steps defined yet.", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("No card tap steps defined yet.", EditorStyles.centeredGreyMiniLabel);
         }
         else
         {
@@ -235,42 +303,34 @@ public class TutorialMapToolEditor : Editor
 
             for (int i = 0; i < tool.tutorialSteps.Count; i++)
             {
-                var step = tool.tutorialSteps[i];
+                CardGizmo card = tool.tutorialSteps[i];
                 EditorGUILayout.BeginHorizontal("box");
 
                 // Step number badge
                 GUILayout.Label($"#{i + 1}", EditorStyles.boldLabel, GUILayout.Width(28));
 
-                // Step type dropdown
-                TutorialStepType prevType = step.stepType;
-                step.stepType = (TutorialStepType)EditorGUILayout.EnumPopup(step.stepType, GUILayout.Width(100));
-                if (prevType != step.stepType)
+                // Target card selector / display
+                CardGizmo prevCard = card;
+                CardGizmo newCard = (CardGizmo)EditorGUILayout.ObjectField(card, typeof(CardGizmo), true);
+                if (prevCard != newCard)
                 {
+                    Undo.RecordObject(tool, "Change Tutorial Step Card");
+                    tool.tutorialSteps[i] = newCard;
                     tool.SyncTutorialSteps();
                 }
 
-                // Target card selector / display
-                if (step.stepType == TutorialStepType.TapCard)
+                if (card != null)
                 {
-                    CardGizmo prevCard = step.targetCard;
-                    step.targetCard = (CardGizmo)EditorGUILayout.ObjectField(step.targetCard, typeof(CardGizmo), true);
-                    if (prevCard != step.targetCard)
-                    {
-                        tool.SyncTutorialSteps();
-                    }
+                    GUILayout.Label($"ID:{card.cardId} ({card.suit} {card.rank})", EditorStyles.miniLabel, GUILayout.Width(110));
 
-                    if (step.targetCard != null)
+                    if (GUILayout.Button("Select", GUILayout.Width(48)))
                     {
-                        if (GUILayout.Button("Select", GUILayout.Width(50)))
-                        {
-                            Selection.activeGameObject = step.targetCard.gameObject;
-                        }
+                        Selection.activeGameObject = card.gameObject;
                     }
                 }
                 else
                 {
-                    GUILayout.Label("-> Draw Pile", EditorStyles.miniBoldLabel);
-                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("[Missing/Deleted]", EditorStyles.miniLabel, GUILayout.Width(110));
                 }
 
                 // Move Up
@@ -306,15 +366,8 @@ public class TutorialMapToolEditor : Editor
             EditorGUILayout.EndScrollView();
         }
 
-        GUILayout.Space(5);
+        GUILayout.Space(6);
         EditorGUILayout.BeginHorizontal();
-
-        // Add Draw Pile Step button
-        GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
-        if (GUILayout.Button("+ Add Draw Pile Step", GUILayout.Height(26)))
-        {
-            tool.AddDrawPileStep();
-        }
 
         // Add Card Step Button with Interactive Scene Click-to-Pick Mode
         if (TutorialStepPicker.isPicking)
@@ -336,6 +389,21 @@ public class TutorialMapToolEditor : Editor
             GUI.backgroundColor = Color.white;
         }
 
+        // Quick add currently selected card
+        CardGizmo selCard = Selection.activeGameObject != null ? Selection.activeGameObject.GetComponent<CardGizmo>() : null;
+        bool canAddSel = selCard != null && selCard.transform.IsChildOf(tool.transform) &&
+            (tool.checkCardObj == null || !selCard.transform.IsChildOf(tool.checkCardObj.transform)) &&
+            (tool.drawPileObj == null || !selCard.transform.IsChildOf(tool.drawPileObj.transform));
+
+        GUI.enabled = canAddSel;
+        GUI.backgroundColor = new Color(0.7f, 0.85f, 1f);
+        if (GUILayout.Button("+ Add Selected", GUILayout.Height(26), GUILayout.Width(105)))
+        {
+            tool.AddCardStep(selCard);
+        }
+        GUI.backgroundColor = Color.white;
+        GUI.enabled = true;
+
         EditorGUILayout.EndHorizontal();
 
         GUILayout.Space(3);
@@ -349,7 +417,7 @@ public class TutorialMapToolEditor : Editor
         GUI.backgroundColor = new Color(1f, 0.7f, 0.7f);
         if (GUILayout.Button("Clear All Steps", GUILayout.Height(24)))
         {
-            if (EditorUtility.DisplayDialog("Clear Steps", "Are you sure you want to clear all tutorial steps?", "Yes", "No"))
+            if (EditorUtility.DisplayDialog("Clear Steps", "Are you sure you want to clear all tutorial steps and flags?", "Yes", "No"))
             {
                 tool.ClearTutorialSteps();
             }
@@ -423,10 +491,13 @@ public class TutorialMapToolEditor : Editor
             Undo.DestroyObjectImmediate(childObj);
         }
         
-        // Reset tutorial steps on canvas
+        // Reset tutorial steps and flags on canvas
         if (tool != null) 
         {
             tool.tutorialSteps.Clear();
+            tool.tapDrawPile = false;
+            tool.tapUndo = false;
+            tool.tapJoker = false;
             tool.SyncTutorialSteps();
         }
     }
@@ -513,6 +584,13 @@ public class TutorialMapToolEditor : Editor
                     { 
                         count = 10,
                         fixedCards = new List<TutorialFixedCard>()
+                    },
+                    tutorialConfig = new TutorialConfig
+                    {
+                        tap_card = new List<int>(),
+                        tap_drawpile = tool.tapDrawPile,
+                        tap_undo = tool.tapUndo,
+                        tap_joker = tool.tapJoker
                     }
                 };
                 levelList.Add(existingLevel);
@@ -570,43 +648,8 @@ public class TutorialMapToolEditor : Editor
         }
         existingLevel.manualConfig.cards = cards;
 
-        // Export Tutorial Config Instructions
-        if (existingLevel.type == "tutorial")
-        {
-            if (existingLevel.tutorialConfig == null) 
-            {
-                existingLevel.tutorialConfig = new TutorialConfig();
-            }
-            existingLevel.tutorialConfig.instructions = new List<TutorialInstruction>();
-
-            for (int i = 0; i < tool.tutorialSteps.Count; i++)
-            {
-                var step = tool.tutorialSteps[i];
-                if (step.stepType == TutorialStepType.TapCard && step.targetCard != null)
-                {
-                    existingLevel.tutorialConfig.instructions.Add(new TutorialInstruction 
-                    { 
-                        type = "tap_card", 
-                        cardId = step.targetCard.cardId 
-                    });
-                }
-                else if (step.stepType == TutorialStepType.TapDrawPile)
-                {
-                    existingLevel.tutorialConfig.instructions.Add(new TutorialInstruction 
-                    { 
-                        type = "tap_drawpile", 
-                        cardId = 0 
-                    });
-                }
-            }
-        }
-        else
-        {
-            existingLevel.tutorialConfig = new TutorialConfig 
-            { 
-                instructions = new List<TutorialInstruction>() 
-            };
-        }
+        // Export Tutorial Config using Helper
+        TutorialDataHelper.SaveTutorialConfig(tool, existingLevel);
 
         TutorialDataHelper.AutoResolveReferences(tool);
         TutorialDataHelper.SaveExtraObjects(tool, existingLevel);
@@ -616,9 +659,10 @@ public class TutorialMapToolEditor : Editor
         int dpCardsCount = existingLevel.drawPileData?.fixedCards != null ? existingLevel.drawPileData.fixedCards.Count : 0;
         int dpTotalCount = existingLevel.drawPileData != null ? existingLevel.drawPileData.count : 0;
         string checkCardStr = existingLevel.checkCardData != null ? $"{existingLevel.checkCardData.rank} of {existingLevel.checkCardData.suit}" : "none";
+        int tapCardsCount = existingLevel.tutorialConfig?.tap_card != null ? existingLevel.tutorialConfig.tap_card.Count : 0;
 
-        Debug.Log($"Level '{targetId}' saved successfully! Canvas cards: {cards.Count}, Tutorial steps: {existingLevel.tutorialConfig.instructions.Count}, DrawPile fixed: {dpCardsCount} (total: {dpTotalCount}), CheckCard: {checkCardStr}");
-        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}\n• Canvas Cards: {cards.Count}\n• Tutorial Steps: {existingLevel.tutorialConfig.instructions.Count}", "OK");
+        Debug.Log($"Level '{targetId}' saved successfully! Canvas cards: {cards.Count}, tap_card count: {tapCardsCount}, tap_drawpile: {existingLevel.tutorialConfig?.tap_drawpile}, tap_undo: {existingLevel.tutorialConfig?.tap_undo}, tap_joker: {existingLevel.tutorialConfig?.tap_joker}, DrawPile fixed: {dpCardsCount} (total: {dpTotalCount}), CheckCard: {checkCardStr}");
+        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• Canvas Cards: {cards.Count}\n• tap_card Steps: {tapCardsCount}\n• tap_drawpile: {existingLevel.tutorialConfig?.tap_drawpile}\n• tap_undo: {existingLevel.tutorialConfig?.tap_undo}\n• tap_joker: {existingLevel.tutorialConfig?.tap_joker}\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}", "OK");
     }
 
     public static void SaveJSONs(TutorialMapTool tool)
@@ -750,42 +794,8 @@ public class TutorialMapToolEditor : Editor
         // Generate Draw Pile and Check Card
         TutorialDataHelper.GenerateExtraObjects(tool, level);
 
-        // Load Tutorial Config Instructions into tool.tutorialSteps
-        tool.tutorialSteps.Clear();
-        if (level.type == "tutorial" && level.tutorialConfig != null && level.tutorialConfig.instructions != null)
-        {
-            foreach (var inst in level.tutorialConfig.instructions)
-            {
-                if (inst.type == "tap_card")
-                {
-                    if (idToGizmo.TryGetValue(inst.cardId, out CardGizmo targetGizmo))
-                    {
-                        tool.tutorialSteps.Add(new TutorialStepItem
-                        {
-                            stepType = TutorialStepType.TapCard,
-                            targetCard = targetGizmo,
-                            cardId = inst.cardId
-                        });
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Instruction target cardId {inst.cardId} not found in generated cards.");
-                    }
-                }
-                else if (inst.type == "tap_drawpile")
-                {
-                    tool.tutorialSteps.Add(new TutorialStepItem
-                    {
-                        stepType = TutorialStepType.TapDrawPile,
-                        targetCard = null,
-                        cardId = 0
-                    });
-                }
-            }
-        }
-
-        // Sync step badges on cards and scene
-        tool.SyncTutorialSteps();
+        // Load Tutorial Config (tap_card, tap_drawpile, tap_undo, tap_joker)
+        TutorialDataHelper.LoadTutorialConfig(tool, level, idToGizmo);
 
         tool.targetLevelId = level.id.ToString();
         tool.targetType = level.type;
@@ -795,6 +805,6 @@ public class TutorialMapToolEditor : Editor
 
         EditorUtility.SetDirty(tool);
         SceneView.RepaintAll();
-        Debug.Log($"Generated Level {level.id} into scene successfully with {tool.tutorialSteps.Count} tutorial steps.");
+        Debug.Log($"Generated Level {level.id} into scene successfully with {tool.tutorialSteps.Count} tap_card steps (drawpile:{tool.tapDrawPile}, undo:{tool.tapUndo}, joker:{tool.tapJoker}).");
     }
 }

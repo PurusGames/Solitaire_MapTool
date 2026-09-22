@@ -170,21 +170,38 @@ public class TutorialDrawPileEditor : Editor
         }
 
         GUILayout.Space(6);
-        GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
-        if (GUILayout.Button("🎯 + Add Draw Pile to Tutorial Steps", GUILayout.Height(28)))
+        if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
+        if (tool != null)
         {
-            if (tool == null) tool = FindObjectOfType<TutorialMapTool>();
-            if (tool != null)
+            bool isDrawPileActive = tool.tapDrawPile;
+            Color activeGreen = new Color(0.35f, 0.88f, 0.45f);
+            Color idleBlue = new Color(0.7f, 0.85f, 1f);
+
+            GUI.backgroundColor = isDrawPileActive ? activeGreen : idleBlue;
+            string btnTitle = isDrawPileActive ? "✔ Tutorial 'tap_drawpile' is ON (Click to Disable)" : "🎯 Enable 'tap_drawpile' in Tutorial";
+            if (GUILayout.Button(btnTitle, GUILayout.Height(28)))
             {
-                tool.AddDrawPileStep();
-                Debug.Log("Added Tap Draw Pile tutorial step.");
+                Undo.RecordObject(tool, "Toggle tap_drawpile");
+                tool.ToggleTapDrawPile();
+                Debug.Log($"Tutorial tap_drawpile set to: {tool.tapDrawPile}");
             }
-            else
+            GUI.backgroundColor = Color.white;
+
+            GUILayout.Space(2);
+            EditorGUI.BeginChangeCheck();
+            bool newDpVal = EditorGUILayout.Toggle("Tutorial tap_drawpile", tool.tapDrawPile);
+            if (EditorGUI.EndChangeCheck())
             {
-                EditorUtility.DisplayDialog("Error", "TutorialMapTool not found in scene.", "OK");
+                Undo.RecordObject(tool, "Toggle tap_drawpile");
+                tool.tapDrawPile = newDpVal;
+                EditorUtility.SetDirty(tool);
+                SceneView.RepaintAll();
             }
         }
-        GUI.backgroundColor = Color.white;
+        else
+        {
+            EditorGUILayout.HelpBox("TutorialMapTool not found in scene.", MessageType.Warning);
+        }
 
         EditorGUILayout.EndVertical();
     }

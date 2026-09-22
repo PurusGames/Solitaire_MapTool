@@ -65,7 +65,7 @@ public class CardGizmoEditor : Editor
         if (pile != null)
         {
             GUILayout.Space(10);
-            EditorGUILayout.HelpBox($"This card is inside Draw Pile ({firstGizmo.gameObject.name}). Changes to its Suit/Rank/Type will automatically save to DrawPile data. To trigger this in tutorial steps, use '+ Add Draw Pile' in Tutorial Map Tool.", MessageType.Info);
+            EditorGUILayout.HelpBox($"This card is inside Draw Pile ({firstGizmo.gameObject.name}). Changes to its Suit/Rank/Type will automatically save to DrawPile data. To trigger this in tutorial steps, enable 'tap_drawpile' in Tutorial Map Tool.", MessageType.Info);
             if (GUILayout.Button("Select Draw Pile Parent"))
             {
                 Selection.activeGameObject = pile.gameObject;
@@ -89,14 +89,14 @@ public class CardGizmoEditor : Editor
         if (tool == null) return;
 
         GUILayout.Space(10);
-        EditorGUILayout.LabelField("Tutorial Step Configuration:", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Tutorial Step Configuration (tap_card):", EditorStyles.boldLabel);
         EditorGUILayout.BeginVertical("helpbox");
 
         if (targets.Length == 1)
         {
             if (firstGizmo.tutorialStep > 0)
             {
-                EditorGUILayout.HelpBox($"This card is Step #{firstGizmo.tutorialStep} of {tool.tutorialSteps.Count} in Tutorial Sequence", MessageType.Info);
+                EditorGUILayout.HelpBox($"This card is Step #{firstGizmo.tutorialStep} of {tool.tutorialSteps.Count} in tap_card sequence", MessageType.Info);
 
                 EditorGUILayout.BeginHorizontal();
                 GUI.enabled = firstGizmo.tutorialStep > 1;
@@ -116,7 +116,7 @@ public class CardGizmoEditor : Editor
 
                 GUILayout.Space(3);
                 GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
-                if (GUILayout.Button("Remove From Tutorial Steps", GUILayout.Height(26)))
+                if (GUILayout.Button("Remove From tap_card Steps", GUILayout.Height(26)))
                 {
                     tool.RemoveCardStep(firstGizmo);
                 }
@@ -150,7 +150,7 @@ public class CardGizmoEditor : Editor
             EditorGUILayout.LabelField($"Selected {targets.Length} cards", EditorStyles.miniBoldLabel);
 
             GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
-            if (GUILayout.Button($"+ Assign Steps to Selected Cards (in order)", GUILayout.Height(34)))
+            if (GUILayout.Button("+ Assign Steps to Selected Cards (in order)", GUILayout.Height(34)))
             {
                 foreach (var obj in targets)
                 {

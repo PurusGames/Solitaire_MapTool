@@ -118,7 +118,7 @@ public class TutorialMapToolWindow : EditorWindow
         {
             EditorGUILayout.BeginVertical("box");
             GUI.backgroundColor = new Color(1f, 0.85f, 0.3f);
-            EditorGUILayout.HelpBox("🎯 PICK CARD MODE ACTIVE:\nClick any card on Scene View to add as next step.\nClick empty space (outside) or press [ESC] to cancel.", MessageType.Warning);
+            EditorGUILayout.HelpBox("🎯 PICK CARD MODE ACTIVE:\nClick any canvas card on Scene View to add to 'tap_card'.\nClick DrawPile to toggle 'tap_drawpile'.\nClick empty space (outside) or press [ESC] to cancel.", MessageType.Warning);
             GUI.backgroundColor = Color.white;
             if (GUILayout.Button("❌ Cancel Picking Mode [ESC]", GUILayout.Height(24)))
             {
@@ -157,7 +157,7 @@ public class TutorialMapToolWindow : EditorWindow
             if (selCard.tutorialStep > 0)
             {
                 GUI.backgroundColor = new Color(1f, 0.9f, 0.5f);
-                GUILayout.Label($"Step #{selCard.tutorialStep}", EditorStyles.boldLabel, GUILayout.Width(70));
+                GUILayout.Label($"tap_card #{selCard.tutorialStep}", EditorStyles.boldLabel, GUILayout.Width(90));
                 GUI.backgroundColor = Color.white;
 
                 if (GUILayout.Button("Remove Step", GUILayout.Height(22)))
@@ -220,8 +220,6 @@ public class TutorialMapToolWindow : EditorWindow
             TutorialMapToolEditor.CenterMap(activeTool);
         }
 
-
-
         // Save Button
         GUI.backgroundColor = new Color(0.55f, 0.92f, 0.55f);
         string btnText = string.IsNullOrEmpty(activeTool.targetLevelId) ?
@@ -240,7 +238,9 @@ public class TutorialMapToolWindow : EditorWindow
 
     private void DrawTutorialStepsSection()
     {
-        showStepsFoldout = EditorGUILayout.Foldout(showStepsFoldout, $"Tutorial Steps ({activeTool.tutorialSteps.Count})", true, EditorStyles.foldoutHeader);
+        int cardCount = activeTool.tutorialSteps != null ? activeTool.tutorialSteps.Count : 0;
+        string flagsStr = $"DP:{(activeTool.tapDrawPile ? "ON" : "OFF")} Undo:{(activeTool.tapUndo ? "ON" : "OFF")} Joker:{(activeTool.tapJoker ? "ON" : "OFF")}";
+        showStepsFoldout = EditorGUILayout.Foldout(showStepsFoldout, $"Tutorial Config (tap_card: {cardCount} | {flagsStr})", true, EditorStyles.foldoutHeader);
         if (!showStepsFoldout) return;
 
         TutorialMapToolEditor.DrawTutorialStepsGUI(activeTool, ref stepScrollPos);
@@ -303,13 +303,25 @@ public class TutorialMapToolWindow : EditorWindow
                 {
                     level.type = itemTypes[newTIdx];
                     level.difficulty = itemDiffs[newDIdx];
-                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.instructions == null))
+                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.tap_card == null))
                     {
-                        level.tutorialConfig = new TutorialConfig { instructions = new List<TutorialInstruction>() };
+                        level.tutorialConfig = new TutorialConfig 
+                        { 
+                            tap_card = new List<int>(),
+                            tap_drawpile = false,
+                            tap_undo = false,
+                            tap_joker = false
+                        };
                     }
                     else if (level.type != "tutorial")
                     {
-                        level.tutorialConfig = new TutorialConfig { instructions = new List<TutorialInstruction>() };
+                        level.tutorialConfig = new TutorialConfig 
+                        { 
+                            tap_card = new List<int>(),
+                            tap_drawpile = false,
+                            tap_undo = false,
+                            tap_joker = false
+                        };
                     }
                     TutorialMapToolEditor.SaveJSONs(activeTool);
                     GUIUtility.ExitGUI();

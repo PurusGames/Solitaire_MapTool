@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [System.Serializable]
 public class TutorialCardData
 {
-public int id;
+    public int id;
     public string type;
     public string extraType;
     public string suit;
@@ -49,31 +49,12 @@ public class TutorialDrawPileData
 }
 
 [System.Serializable]
-public class TutorialInstruction
-{
-    public string type;
-    public int cardId;
-}
-
-[System.Serializable]
 public class TutorialConfig
 {
-    public List<TutorialInstruction> instructions;
-}
-
-public enum TutorialStepType
-{
-    TapCard,
-    TapDrawPile
-}
-
-[System.Serializable]
-public class TutorialStepItem
-{
-    public TutorialStepType stepType = TutorialStepType.TapCard;
-    public CardGizmo targetCard;
-    [HideInInspector]
-    public int cardId;
+    public List<int> tap_card = new List<int>();
+    public bool tap_drawpile;
+    public bool tap_undo;
+    public bool tap_joker;
 }
 
 [System.Serializable]
@@ -120,8 +101,11 @@ public class TutorialMapTool : MonoBehaviour
     public bool invertAngle = true;
     public bool autoCenterOnSave = true;
 
-    [Header("Tutorial Steps")]
-    public List<TutorialStepItem> tutorialSteps = new List<TutorialStepItem>();
+    [Header("Tutorial Config (Sequence & Flags)")]
+    public List<CardGizmo> tutorialSteps = new List<CardGizmo>();
+    public bool tapDrawPile = false;
+    public bool tapUndo = false;
+    public bool tapJoker = false;
 
     private void OnValidate()
     {
@@ -197,21 +181,21 @@ public class TutorialMapTool : MonoBehaviour
 #endif
         }
 
-        // 2. Remove invalid card steps where targetCard was destroyed
-        tutorialSteps.RemoveAll(s => s.stepType == TutorialStepType.TapCard && s.targetCard == null);
+        // 2. Remove null cards (destroyed or unassigned)
+        tutorialSteps.RemoveAll(c => c == null);
 
         // 3. Assign step index (1-based) to each step's card
         for (int i = 0; i < tutorialSteps.Count; i++)
         {
-            var step = tutorialSteps[i];
-            if (step.stepType == TutorialStepType.TapCard && step.targetCard != null)
+            var card = tutorialSteps[i];
+            if (card != null)
             {
 #if UNITY_EDITOR
-                UnityEditor.Undo.RecordObject(step.targetCard, "Set Card Step");
+                UnityEditor.Undo.RecordObject(card, "Set Card Step");
 #endif
-                step.targetCard.tutorialStep = i + 1;
+                card.tutorialStep = i + 1;
 #if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(step.targetCard);
+                UnityEditor.EditorUtility.SetDirty(card);
 #endif
             }
         }
@@ -229,13 +213,8 @@ public class TutorialMapTool : MonoBehaviour
         UnityEditor.Undo.RecordObject(this, "Add Card Tutorial Step");
 #endif
         // Remove existing step for this card if present so it moves to next
-        tutorialSteps.RemoveAll(s => s.stepType == TutorialStepType.TapCard && s.targetCard == card);
-
-        tutorialSteps.Add(new TutorialStepItem
-        {
-            stepType = TutorialStepType.TapCard,
-            targetCard = card
-        });
+        tutorialSteps.RemoveAll(c => c == card);
+        tutorialSteps.Add(card);
 
         SyncTutorialSteps();
     }
@@ -246,14 +225,10 @@ public class TutorialMapTool : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.Undo.RecordObject(this, "Set Card Tutorial Step");
 #endif
-        tutorialSteps.RemoveAll(s => s.stepType == TutorialStepType.TapCard && s.targetCard == card);
+        tutorialSteps.RemoveAll(c => c == card);
 
         int insertIndex = Mathf.Clamp(stepNumber - 1, 0, tutorialSteps.Count);
-        tutorialSteps.Insert(insertIndex, new TutorialStepItem
-        {
-            stepType = TutorialStepType.TapCard,
-            targetCard = card
-        });
+        tutorialSteps.Insert(insertIndex, card);
 
         SyncTutorialSteps();
     }
@@ -264,22 +239,56 @@ public class TutorialMapTool : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.Undo.RecordObject(this, "Remove Card Tutorial Step");
 #endif
-        tutorialSteps.RemoveAll(s => s.stepType == TutorialStepType.TapCard && s.targetCard == card);
+        tutorialSteps.RemoveAll(c => c == card);
         SyncTutorialSteps();
     }
 
     public void AddDrawPileStep()
     {
 #if UNITY_EDITOR
-        UnityEditor.Undo.RecordObject(this, "Add Draw Pile Tutorial Step");
+        UnityEditor.Undo.RecordObject(this, "Enable Draw Pile Tutorial Step");
 #endif
-        tutorialSteps.Add(new TutorialStepItem
-        {
-            stepType = TutorialStepType.TapDrawPile,
-            targetCard = null
-        });
+        tapDrawPile = true;
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.SceneView.RepaintAll();
+#endif
+    }
 
-        SyncTutorialSteps();
+    public void ToggleTapDrawPile()
+    {
+#if UNITY_EDITOR
+        UnityEditor.Undo.RecordObject(this, "Toggle Tap Draw Pile");
+#endif
+        tapDrawPile = !tapDrawPile;
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.SceneView.RepaintAll();
+#endif
+    }
+
+    public void ToggleTapUndo()
+    {
+#if UNITY_EDITOR
+        UnityEditor.Undo.RecordObject(this, "Toggle Tap Undo");
+#endif
+        tapUndo = !tapUndo;
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.SceneView.RepaintAll();
+#endif
+    }
+
+    public void ToggleTapJoker()
+    {
+#if UNITY_EDITOR
+        UnityEditor.Undo.RecordObject(this, "Toggle Tap Joker");
+#endif
+        tapJoker = !tapJoker;
+#if UNITY_EDITOR
+        UnityEditor.EditorUtility.SetDirty(this);
+        UnityEditor.SceneView.RepaintAll();
+#endif
     }
 
     public void MoveStep(int fromIndex, int toIndex)
@@ -314,21 +323,10 @@ public class TutorialMapTool : MonoBehaviour
         UnityEditor.Undo.RecordObject(this, "Clear Tutorial Steps");
 #endif
         tutorialSteps.Clear();
+        tapDrawPile = false;
+        tapUndo = false;
+        tapJoker = false;
         SyncTutorialSteps();
-    }
-
-    public Vector3 GetStepWorldPosition(TutorialStepItem step)
-    {
-        if (step == null) return Vector3.zero;
-        if (step.stepType == TutorialStepType.TapCard && step.targetCard != null)
-        {
-            return step.targetCard.transform.position;
-        }
-        if (step.stepType == TutorialStepType.TapDrawPile && drawPileObj != null)
-        {
-            return drawPileObj.transform.position;
-        }
-        return Vector3.zero;
     }
 
 #if UNITY_EDITOR
@@ -346,34 +344,36 @@ public class TutorialMapTool : MonoBehaviour
             UnityEditor.Handles.Label(transform.position + Vector3.up * 3f, "Level: " + levelStr, style);
         }
 
-        // Draw path connecting tutorial steps
+        // Draw indicator on DrawPile if tapDrawPile is enabled
+        if (tapDrawPile && drawPileObj != null)
+        {
+            Vector3 pos = drawPileObj.transform.position + Vector3.up * 0.7f;
+            UnityEditor.Handles.color = new Color(0.2f, 0.7f, 1f, 0.9f);
+            UnityEditor.Handles.DrawSolidDisc(pos, Vector3.forward, 0.35f);
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.DrawWireDisc(pos, Vector3.forward, 0.35f);
+
+            GUIStyle dpStyle = new GUIStyle();
+            dpStyle.normal.textColor = Color.white;
+            dpStyle.fontSize = 9;
+            dpStyle.fontStyle = FontStyle.Bold;
+            dpStyle.alignment = TextAnchor.MiddleCenter;
+            UnityEditor.Handles.Label(pos, "TAP\nPILE", dpStyle);
+        }
+
+        // Draw path connecting tutorial card steps
         if (tutorialSteps != null && tutorialSteps.Count > 0)
         {
             for (int i = 0; i < tutorialSteps.Count; i++)
             {
-                var step = tutorialSteps[i];
-                if (step.stepType == TutorialStepType.TapDrawPile && drawPileObj != null)
-                {
-                    Vector3 pos = drawPileObj.transform.position + Vector3.up * 0.7f;
-                    UnityEditor.Handles.color = new Color(0.2f, 0.7f, 1f, 0.9f);
-                    UnityEditor.Handles.DrawSolidDisc(pos, Vector3.forward, 0.35f);
-                    UnityEditor.Handles.color = Color.white;
-                    UnityEditor.Handles.DrawWireDisc(pos, Vector3.forward, 0.35f);
-
-                    GUIStyle dpStyle = new GUIStyle();
-                    dpStyle.normal.textColor = Color.white;
-                    dpStyle.fontSize = 13;
-                    dpStyle.fontStyle = FontStyle.Bold;
-                    dpStyle.alignment = TextAnchor.MiddleCenter;
-                    UnityEditor.Handles.Label(pos, $"{i + 1}", dpStyle);
-                }
-
                 if (i < tutorialSteps.Count - 1)
                 {
-                    Vector3 p1 = GetStepWorldPosition(tutorialSteps[i]);
-                    Vector3 p2 = GetStepWorldPosition(tutorialSteps[i + 1]);
-                    if (p1 != Vector3.zero && p2 != Vector3.zero)
+                    var c1 = tutorialSteps[i];
+                    var c2 = tutorialSteps[i + 1];
+                    if (c1 != null && c2 != null)
                     {
+                        Vector3 p1 = c1.transform.position;
+                        Vector3 p2 = c2.transform.position;
                         UnityEditor.Handles.color = new Color(0.2f, 0.85f, 1f, 0.8f);
                         UnityEditor.Handles.DrawDottedLine(p1, p2, 4f);
 

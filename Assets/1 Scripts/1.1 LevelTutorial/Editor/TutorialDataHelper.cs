@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 
 namespace UnityEditor
 {
@@ -72,6 +73,78 @@ namespace UnityEditor
             {
                 level.drawPileData = tool.drawPileObj.SaveData();
             }
+
+            SaveTutorialConfig(tool, level);
+        }
+
+        public static void SaveTutorialConfig(TutorialMapTool tool, TutorialLevelData level)
+        {
+            if (tool == null || level == null) return;
+
+            if (level.tutorialConfig == null)
+            {
+                level.tutorialConfig = new TutorialConfig();
+            }
+
+            level.tutorialConfig.tap_card = new List<int>();
+
+            if (level.type == "tutorial")
+            {
+                if (tool.tutorialSteps != null)
+                {
+                    foreach (var card in tool.tutorialSteps)
+                    {
+                        if (card != null)
+                        {
+                            level.tutorialConfig.tap_card.Add(card.cardId);
+                        }
+                    }
+                }
+
+                level.tutorialConfig.tap_drawpile = tool.tapDrawPile;
+                level.tutorialConfig.tap_undo = tool.tapUndo;
+                level.tutorialConfig.tap_joker = tool.tapJoker;
+            }
+            else
+            {
+                level.tutorialConfig.tap_drawpile = false;
+                level.tutorialConfig.tap_undo = false;
+                level.tutorialConfig.tap_joker = false;
+            }
+        }
+
+        public static void LoadTutorialConfig(TutorialMapTool tool, TutorialLevelData level, Dictionary<int, CardGizmo> idToGizmo)
+        {
+            if (tool == null) return;
+
+            tool.tutorialSteps.Clear();
+            tool.tapDrawPile = false;
+            tool.tapUndo = false;
+            tool.tapJoker = false;
+
+            if (level != null && level.tutorialConfig != null)
+            {
+                tool.tapDrawPile = level.tutorialConfig.tap_drawpile;
+                tool.tapUndo = level.tutorialConfig.tap_undo;
+                tool.tapJoker = level.tutorialConfig.tap_joker;
+
+                if (level.tutorialConfig.tap_card != null)
+                {
+                    foreach (int cid in level.tutorialConfig.tap_card)
+                    {
+                        if (idToGizmo != null && idToGizmo.TryGetValue(cid, out CardGizmo targetGizmo))
+                        {
+                            tool.tutorialSteps.Add(targetGizmo);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[TutorialConfig] Card ID {cid} in tap_card not found in generated scene cards.");
+                        }
+                    }
+                }
+            }
+
+            tool.SyncTutorialSteps();
         }
     }
 }
