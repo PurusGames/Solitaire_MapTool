@@ -173,7 +173,7 @@ public class CardGizmo : MonoBehaviour
             if (showFaceDetails && type != CardType.Normal)
             {
                 typeRenderer.enabled = true;
-                typeRenderer.sprite = spriteData.GetTypeSprite(type);
+                typeRenderer.sprite = spriteData.GetTypeSprite(type, extraType);
             }
             else
             {

@@ -33,7 +33,10 @@ public class CardSpriteData : ScriptableObject
 
     [Header("Special Type Sprites")]
     public Sprite jokerSprite;
-    public Sprite extraSprite;
+    [UnityEngine.Serialization.FormerlySerializedAs("extraSprite")]
+    public Sprite extraPlus5Sprite;
+    public Sprite extraPlus2Sprite;
+    public Sprite extraPlus3Sprite;
     public Sprite keySprite;
 
     [Header("Obstacle Sprites")]
@@ -67,12 +70,15 @@ public class CardSpriteData : ScriptableObject
         return null;
     }
 
-    public Sprite GetTypeSprite(CardType type)
+    public Sprite GetTypeSprite(CardType type, CardExtraType extraType = CardExtraType.None)
     {
         switch (type)
         {
             case CardType.Joker: return jokerSprite;
-            case CardType.Extra: return extraSprite;
+            case CardType.Extra:
+                if (extraType == CardExtraType.Plus2) return extraPlus2Sprite;
+                if (extraType == CardExtraType.Plus3) return extraPlus3Sprite;
+                return extraPlus5Sprite;
             case CardType.Key: return keySprite;
             default: return null;
         }
