@@ -27,23 +27,23 @@ public static class TutorialStepPicker
             return;
         }
 
-        activeTool = tool;
-        isPicking = true;
-
         EditorApplication.delayCall += () =>
         {
+            activeTool = tool;
+            isPicking = true;
             SceneView.RepaintAll();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         };
     }
 
     public static void StopPicking()
     {
-        isPicking = false;
-        activeTool = null;
-
         EditorApplication.delayCall += () =>
         {
+            isPicking = false;
+            activeTool = null;
             SceneView.RepaintAll();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         };
     }
 
@@ -53,9 +53,12 @@ public static class TutorialStepPicker
 
         Event e = Event.current;
 
-        // Force passive control ID so Unity doesn't execute standard selection/manipulation
+        // Force passive control ID only during Layout so Unity doesn't execute standard selection/manipulation
         int controlID = GUIUtility.GetControlID(FocusType.Passive);
-        HandleUtility.AddDefaultControl(controlID);
+        if (e.type == EventType.Layout)
+        {
+            HandleUtility.AddDefaultControl(controlID);
+        }
 
         // Handle Escape to cancel
         if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Escape)
@@ -65,15 +68,9 @@ public static class TutorialStepPicker
             return;
         }
 
-        // Draw top banner & cursor in SceneView GUI
         Handles.BeginGUI();
         try
         {
-            if (e.type == EventType.Repaint)
-            {
-                EditorGUIUtility.AddCursorRect(new Rect(0, 0, sceneView.position.width, sceneView.position.height), MouseCursor.Link);
-            }
-
             float bannerW = 440;
             float bannerH = 55;
             Rect rect = new Rect((sceneView.position.width - bannerW) / 2f, 15, bannerW, bannerH);
@@ -101,7 +98,6 @@ public static class TutorialStepPicker
             Handles.EndGUI();
         }
 
-        // Hover highlight
         CardGizmo hoveredCard = FindCardUnderMouse(e.mousePosition);
         TutorialDrawPile hoveredPile = hoveredCard == null ? FindDrawPileUnderMouse(e.mousePosition) : null;
 

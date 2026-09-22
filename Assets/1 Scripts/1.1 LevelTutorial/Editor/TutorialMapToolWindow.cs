@@ -341,13 +341,7 @@ public class TutorialMapToolWindow : EditorWindow
                         }
                         else if (level.type != "tutorial")
                         {
-                            level.tutorialConfig = new TutorialConfig 
-                            { 
-                                tap_card = new List<int>(),
-                                tap_drawpile = false,
-                                tap_undo = false,
-                                tap_joker = false
-                            };
+                            level.tutorialConfig = null;
                         }
                         jsonNeedsSave = true;
                     }

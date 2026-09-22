@@ -81,16 +81,19 @@ namespace UnityEditor
         {
             if (tool == null || level == null) return;
 
-            if (level.tutorialConfig == null)
-            {
-                level.tutorialConfig = new TutorialConfig();
-            }
+            bool hasSteps = tool.tutorialSteps != null && tool.tutorialSteps.Count > 0;
+            bool hasFlags = tool.tapDrawPile || tool.tapUndo || tool.tapJoker;
+            bool isTutorial = level.type == "tutorial";
 
-            level.tutorialConfig.tap_card = new List<int>();
-
-            if (level.type == "tutorial")
+            if (isTutorial && (hasSteps || hasFlags))
             {
-                if (tool.tutorialSteps != null)
+                if (level.tutorialConfig == null)
+                {
+                    level.tutorialConfig = new TutorialConfig();
+                }
+
+                level.tutorialConfig.tap_card = new List<int>();
+                if (hasSteps)
                 {
                     foreach (var card in tool.tutorialSteps)
                     {
@@ -107,9 +110,7 @@ namespace UnityEditor
             }
             else
             {
-                level.tutorialConfig.tap_drawpile = false;
-                level.tutorialConfig.tap_undo = false;
-                level.tutorialConfig.tap_joker = false;
+                level.tutorialConfig = null;
             }
         }
 

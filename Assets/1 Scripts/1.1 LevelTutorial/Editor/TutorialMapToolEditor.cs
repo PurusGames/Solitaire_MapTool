@@ -149,13 +149,7 @@ public class TutorialMapToolEditor : Editor
                         } 
                         else if (level.type != "tutorial") 
                         {
-                            level.tutorialConfig = new TutorialConfig 
-                            { 
-                                tap_card = new List<int>(),
-                                tap_drawpile = false,
-                                tap_undo = false,
-                                tap_joker = false
-                            };
+                            level.tutorialConfig = null;
                         }
                         jsonNeedsSave = true;
                     }
@@ -621,13 +615,7 @@ public class TutorialMapToolEditor : Editor
                         count = 10,
                         fixedCards = new List<TutorialFixedCard>()
                     },
-                    tutorialConfig = new TutorialConfig
-                    {
-                        tap_card = new List<int>(),
-                        tap_drawpile = tool.tapDrawPile,
-                        tap_undo = tool.tapUndo,
-                        tap_joker = tool.tapJoker
-                    }
+                    tutorialConfig = null
                 };
                 levelList.Add(existingLevel);
                 tool.loadedLevels = levelList.ToArray();
@@ -696,9 +684,10 @@ public class TutorialMapToolEditor : Editor
         int dpTotalCount = existingLevel.drawPileData != null ? existingLevel.drawPileData.count : 0;
         string checkCardStr = existingLevel.checkCardData != null ? $"{existingLevel.checkCardData.rank} of {existingLevel.checkCardData.suit}" : "none";
         int tapCardsCount = existingLevel.tutorialConfig?.tap_card != null ? existingLevel.tutorialConfig.tap_card.Count : 0;
+        string tutorialConfigStatus = existingLevel.tutorialConfig != null ? $"tap_card: {tapCardsCount}, DP:{existingLevel.tutorialConfig.tap_drawpile}, Undo:{existingLevel.tutorialConfig.tap_undo}, Joker:{existingLevel.tutorialConfig.tap_joker}" : "empty ({})";
 
-        Debug.Log($"Level '{targetId}' saved successfully! Canvas cards: {cards.Count}, tap_card count: {tapCardsCount}, tap_drawpile: {existingLevel.tutorialConfig?.tap_drawpile}, tap_undo: {existingLevel.tutorialConfig?.tap_undo}, tap_joker: {existingLevel.tutorialConfig?.tap_joker}, DrawPile fixed: {dpCardsCount} (total: {dpTotalCount}), CheckCard: {checkCardStr}");
-        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• Canvas Cards: {cards.Count}\n• tap_card Steps: {tapCardsCount}\n• tap_drawpile: {existingLevel.tutorialConfig?.tap_drawpile}\n• tap_undo: {existingLevel.tutorialConfig?.tap_undo}\n• tap_joker: {existingLevel.tutorialConfig?.tap_joker}\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}", "OK");
+        Debug.Log($"Level '{targetId}' saved successfully! Canvas cards: {cards.Count}, TutorialConfig: {tutorialConfigStatus}, DrawPile fixed: {dpCardsCount} (total: {dpTotalCount}), CheckCard: {checkCardStr}");
+        EditorUtility.DisplayDialog("Success", $"Level '{targetId}' saved successfully to JSON!\n\n• Canvas Cards: {cards.Count}\n• Tutorial Config: {tutorialConfigStatus}\n• DrawPile: {dpCardsCount} fixed cards (total count: {dpTotalCount})\n• CheckCard: {checkCardStr}", "OK");
     }
 
     public static void SaveJSONs(TutorialMapTool tool)
@@ -711,6 +700,20 @@ public class TutorialMapToolEditor : Editor
         }
         else
         {
+            // Clean tutorialConfig for levels where nothing is configured or type is not tutorial
+            foreach (var lvl in tool.loadedLevels)
+            {
+                if (lvl == null) continue;
+                bool isTutorial = lvl.type == "tutorial";
+                bool hasSteps = lvl.tutorialConfig != null && lvl.tutorialConfig.tap_card != null && lvl.tutorialConfig.tap_card.Count > 0;
+                bool hasFlags = lvl.tutorialConfig != null && (lvl.tutorialConfig.tap_drawpile || lvl.tutorialConfig.tap_undo || lvl.tutorialConfig.tap_joker);
+
+                if (!isTutorial || (!hasSteps && !hasFlags))
+                {
+                    lvl.tutorialConfig = null;
+                }
+            }
+
             ArrayWrapper<TutorialLevelData> wrapper = new ArrayWrapper<TutorialLevelData> { Items = tool.loadedLevels };
             json = JsonUtility.ToJson(wrapper, true);
             int start = json.IndexOf("[");
@@ -723,6 +726,10 @@ public class TutorialMapToolEditor : Editor
             {
                 json = "[]";
             }
+
+            // Replace default empty serialized tutorialConfig with empty object {}
+            string emptyConfigPattern = @"\""tutorialConfig\""\s*:\s*\{\s*\""tap_card\""\s*:\s*\[\s*\]\s*,\s*\""tap_drawpile\""\s*:\s*false\s*,\s*\""tap_undo\""\s*:\s*false\s*,\s*\""tap_joker\""\s*:\s*false\s*\}";
+            json = System.Text.RegularExpressions.Regex.Replace(json, emptyConfigPattern, "\"tutorialConfig\": {}");
         }
         File.WriteAllText(tool.jsonPath, json);
         AssetDatabase.Refresh();
