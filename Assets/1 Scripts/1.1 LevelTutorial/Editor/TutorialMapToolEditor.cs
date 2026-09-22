@@ -114,77 +114,93 @@ public class TutorialMapToolEditor : Editor
             
             EditorGUILayout.BeginVertical("helpbox");
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(220));
-            foreach (var level in tool.loadedLevels)
-            {
-                GUILayout.BeginHorizontal();
-                
-                GUILayout.Label($"ID: {level.id}", GUILayout.Width(50));
-                
-                string[] itemTypes = { "manual", "tutorial" };
-                int tIdx = Mathf.Max(0, System.Array.IndexOf(itemTypes, string.IsNullOrEmpty(level.type) ? "tutorial" : level.type));
-                int newTIdx = EditorGUILayout.Popup(tIdx, itemTypes, GUILayout.Width(75));
-                
-                string[] itemDiffs = { "easy", "medium", "hard", "super_hard" };
-                int dIdx = Mathf.Max(0, System.Array.IndexOf(itemDiffs, string.IsNullOrEmpty(level.difficulty) ? "easy" : level.difficulty));
-                int newDIdx = EditorGUILayout.Popup(dIdx, itemDiffs, GUILayout.Width(95));
+            TutorialLevelData levelToDelete = null;
+            bool jsonNeedsSave = false;
 
-                if (newTIdx != tIdx || newDIdx != dIdx)
+            try
+            {
+                foreach (var level in tool.loadedLevels)
                 {
-                    level.type = itemTypes[newTIdx];
-                    level.difficulty = itemDiffs[newDIdx];
-                    if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.tap_card == null)) 
+                    GUILayout.BeginHorizontal();
+                    
+                    GUILayout.Label($"ID: {level.id}", GUILayout.Width(50));
+                    
+                    string[] itemTypes = { "manual", "tutorial" };
+                    int tIdx = Mathf.Max(0, System.Array.IndexOf(itemTypes, string.IsNullOrEmpty(level.type) ? "tutorial" : level.type));
+                    int newTIdx = EditorGUILayout.Popup(tIdx, itemTypes, GUILayout.Width(75));
+                    
+                    string[] itemDiffs = { "easy", "medium", "hard", "super_hard" };
+                    int dIdx = Mathf.Max(0, System.Array.IndexOf(itemDiffs, string.IsNullOrEmpty(level.difficulty) ? "easy" : level.difficulty));
+                    int newDIdx = EditorGUILayout.Popup(dIdx, itemDiffs, GUILayout.Width(95));
+
+                    if (newTIdx != tIdx || newDIdx != dIdx)
                     {
-                        level.tutorialConfig = new TutorialConfig 
+                        level.type = itemTypes[newTIdx];
+                        level.difficulty = itemDiffs[newDIdx];
+                        if (level.type == "tutorial" && (level.tutorialConfig == null || level.tutorialConfig.tap_card == null)) 
                         {
-                            tap_card = new List<int>(),
-                            tap_drawpile = false,
-                            tap_undo = false,
-                            tap_joker = false
-                        };
-                    } 
-                    else if (level.type != "tutorial") 
-                    {
-                        level.tutorialConfig = new TutorialConfig 
-                        { 
-                            tap_card = new List<int>(),
-                            tap_drawpile = false,
-                            tap_undo = false,
-                            tap_joker = false
-                        };
+                            level.tutorialConfig = new TutorialConfig 
+                            {
+                                tap_card = new List<int>(),
+                                tap_drawpile = false,
+                                tap_undo = false,
+                                tap_joker = false
+                            };
+                        } 
+                        else if (level.type != "tutorial") 
+                        {
+                            level.tutorialConfig = new TutorialConfig 
+                            { 
+                                tap_card = new List<int>(),
+                                tap_drawpile = false,
+                                tap_undo = false,
+                                tap_joker = false
+                            };
+                        }
+                        jsonNeedsSave = true;
                     }
-                    SaveJSONs(tool);
-                    GUIUtility.ExitGUI();
-                }
-                
-                GUILayout.Space(5);
-                if (GUILayout.Button("Generate", GUILayout.Width(80)))
-                {
-                    GenerateLevelInScene(tool, level);
-                }
-                
-                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
-                if (GUILayout.Button("Del", GUILayout.Width(35)))
-                {
-                    if (EditorUtility.DisplayDialog("Delete Level", $"Are you sure you want to delete level '{level.id}'?", "Yes", "No"))
+                    
+                    GUILayout.Space(5);
+                    if (GUILayout.Button("Generate", GUILayout.Width(80)))
                     {
-                        var list = new List<TutorialLevelData>(tool.loadedLevels);
-                        list.Remove(level);
-                        tool.loadedLevels = list.ToArray();
-                        SaveJSONs(tool);
-                        GUIUtility.ExitGUI();
+                        GenerateLevelInScene(tool, level);
                     }
+                    
+                    GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+                    if (GUILayout.Button("Del", GUILayout.Width(35)))
+                    {
+                        if (EditorUtility.DisplayDialog("Delete Level", $"Are you sure you want to delete level '{level.id}'?", "Yes", "No"))
+                        {
+                            levelToDelete = level;
+                        }
+                    }
+                    GUI.backgroundColor = Color.white;
+                    
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(2);
                 }
-                GUI.backgroundColor = Color.white;
-                
-                GUILayout.EndHorizontal();
-                GUILayout.Space(2);
             }
-            EditorGUILayout.EndScrollView();
-            EditorGUILayout.EndVertical();
+            finally
+            {
+                EditorGUILayout.EndScrollView();
+                EditorGUILayout.EndVertical();
+            }
+
+            if (levelToDelete != null)
+            {
+                var list = new List<TutorialLevelData>(tool.loadedLevels);
+                list.Remove(levelToDelete);
+                tool.loadedLevels = list.ToArray();
+                SaveJSONs(tool);
+            }
+            else if (jsonNeedsSave)
+            {
+                SaveJSONs(tool);
+            }
         }
 
         // TUTORIAL CONFIG & STEPS SECTION
-        DrawTutorialStepsGUI(tool, ref stepScrollPos);
+        DrawTutorialStepsGUI(tool, ref stepScrollPos, 380f);
 
         GUILayout.Space(15);
         EditorGUILayout.LabelField("Current Scene Tutorial Map Actions:", EditorStyles.boldLabel);
@@ -224,7 +240,7 @@ public class TutorialMapToolEditor : Editor
         EditorGUILayout.EndVertical();
     }
 
-    public static void DrawTutorialStepsGUI(TutorialMapTool tool, ref Vector2 scrollPos)
+    public static void DrawTutorialStepsGUI(TutorialMapTool tool, ref Vector2 scrollPos, float maxHeight = 400f)
     {
         if (tool == null) return;
 
@@ -282,7 +298,10 @@ public class TutorialMapToolEditor : Editor
             tool.tapUndo = newUndo;
             tool.tapJoker = newJoker;
             EditorUtility.SetDirty(tool);
-            SceneView.RepaintAll();
+            EditorApplication.delayCall += () =>
+            {
+                SceneView.RepaintAll();
+            };
         }
         EditorGUILayout.EndHorizontal();
 
@@ -299,71 +318,88 @@ public class TutorialMapToolEditor : Editor
         }
         else
         {
-            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.MaxHeight(220));
+            float calculatedHeight = Mathf.Clamp(tool.tutorialSteps.Count * 33f + 12f, 150f, maxHeight);
+            scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.Height(calculatedHeight));
 
-            for (int i = 0; i < tool.tutorialSteps.Count; i++)
+            int moveFrom = -1;
+            int moveTo = -1;
+            int removeIndex = -1;
+
+            try
             {
-                CardGizmo card = tool.tutorialSteps[i];
-                EditorGUILayout.BeginHorizontal("box");
-
-                // Step number badge
-                GUILayout.Label($"#{i + 1}", EditorStyles.boldLabel, GUILayout.Width(28));
-
-                // Target card selector / display
-                CardGizmo prevCard = card;
-                CardGizmo newCard = (CardGizmo)EditorGUILayout.ObjectField(card, typeof(CardGizmo), true);
-                if (prevCard != newCard)
+                for (int i = 0; i < tool.tutorialSteps.Count; i++)
                 {
-                    Undo.RecordObject(tool, "Change Tutorial Step Card");
-                    tool.tutorialSteps[i] = newCard;
-                    tool.SyncTutorialSteps();
-                }
+                    CardGizmo card = tool.tutorialSteps[i];
+                    EditorGUILayout.BeginHorizontal("box");
 
-                if (card != null)
-                {
-                    GUILayout.Label($"ID:{card.cardId} ({card.suit} {card.rank})", EditorStyles.miniLabel, GUILayout.Width(110));
+                    // Step number badge
+                    GUILayout.Label($"#{i + 1}", EditorStyles.boldLabel, GUILayout.Width(28));
 
-                    if (GUILayout.Button("Select", GUILayout.Width(48)))
+                    // Target card selector / display
+                    CardGizmo prevCard = card;
+                    CardGizmo newCard = (CardGizmo)EditorGUILayout.ObjectField(card, typeof(CardGizmo), true);
+                    if (prevCard != newCard)
                     {
-                        Selection.activeGameObject = card.gameObject;
+                        Undo.RecordObject(tool, "Change Tutorial Step Card");
+                        tool.tutorialSteps[i] = newCard;
+                        tool.SyncTutorialSteps();
                     }
-                }
-                else
-                {
-                    GUILayout.Label("[Missing/Deleted]", EditorStyles.miniLabel, GUILayout.Width(110));
-                }
 
-                // Move Up
-                GUI.enabled = i > 0;
-                if (GUILayout.Button("▲", GUILayout.Width(25)))
-                {
-                    tool.MoveStep(i, i - 1);
-                    GUIUtility.ExitGUI();
-                }
+                    if (card != null)
+                    {
+                        GUILayout.Label($"ID:{card.cardId} ({card.suit} {card.rank})", EditorStyles.miniLabel, GUILayout.Width(110));
 
-                // Move Down
-                GUI.enabled = i < tool.tutorialSteps.Count - 1;
-                if (GUILayout.Button("▼", GUILayout.Width(25)))
-                {
-                    tool.MoveStep(i, i + 1);
-                    GUIUtility.ExitGUI();
-                }
-                GUI.enabled = true;
+                        if (GUILayout.Button("Select", GUILayout.Width(48)))
+                        {
+                            Selection.activeGameObject = card.gameObject;
+                        }
+                    }
+                    else
+                    {
+                        GUILayout.Label("[Missing/Deleted]", EditorStyles.miniLabel, GUILayout.Width(110));
+                    }
 
-                // Delete Step
-                GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
-                if (GUILayout.Button("X", GUILayout.Width(25)))
-                {
-                    tool.RemoveStepAt(i);
+                    // Move Up
+                    GUI.enabled = i > 0;
+                    if (GUILayout.Button("▲", GUILayout.Width(25)))
+                    {
+                        moveFrom = i;
+                        moveTo = i - 1;
+                    }
+
+                    // Move Down
+                    GUI.enabled = i < tool.tutorialSteps.Count - 1;
+                    if (GUILayout.Button("▼", GUILayout.Width(25)))
+                    {
+                        moveFrom = i;
+                        moveTo = i + 1;
+                    }
+                    GUI.enabled = true;
+
+                    // Delete Step
+                    GUI.backgroundColor = new Color(1f, 0.6f, 0.6f);
+                    if (GUILayout.Button("X", GUILayout.Width(25)))
+                    {
+                        removeIndex = i;
+                    }
                     GUI.backgroundColor = Color.white;
-                    GUIUtility.ExitGUI();
-                }
-                GUI.backgroundColor = Color.white;
 
-                EditorGUILayout.EndHorizontal();
+                    EditorGUILayout.EndHorizontal();
+                }
+            }
+            finally
+            {
+                EditorGUILayout.EndScrollView();
             }
 
-            EditorGUILayout.EndScrollView();
+            if (moveFrom != -1 && moveTo != -1)
+            {
+                tool.MoveStep(moveFrom, moveTo);
+            }
+            else if (removeIndex != -1)
+            {
+                tool.RemoveStepAt(removeIndex);
+            }
         }
 
         GUILayout.Space(6);
@@ -417,7 +453,7 @@ public class TutorialMapToolEditor : Editor
         GUI.backgroundColor = new Color(1f, 0.7f, 0.7f);
         if (GUILayout.Button("Clear All Steps", GUILayout.Height(24)))
         {
-            if (EditorUtility.DisplayDialog("Clear Steps", "Are you sure you want to clear all tutorial steps and flags?", "Yes", "No"))
+            if (EditorUtility.DisplayDialog("Clear Steps", "Are you sure you want to clear all tutorial steps and flags? ", "Yes", "No"))
             {
                 tool.ClearTutorialSteps();
             }
@@ -804,7 +840,10 @@ public class TutorialMapToolEditor : Editor
         tool.UpdateLevelText();
 
         EditorUtility.SetDirty(tool);
-        SceneView.RepaintAll();
+        EditorApplication.delayCall += () =>
+        {
+            SceneView.RepaintAll();
+        };
         Debug.Log($"Generated Level {level.id} into scene successfully with {tool.tutorialSteps.Count} tap_card steps (drawpile:{tool.tapDrawPile}, undo:{tool.tapUndo}, joker:{tool.tapJoker}).");
     }
 }

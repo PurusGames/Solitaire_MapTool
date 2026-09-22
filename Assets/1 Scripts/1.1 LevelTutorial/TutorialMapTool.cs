@@ -202,7 +202,10 @@ public class TutorialMapTool : MonoBehaviour
 
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.SceneView.RepaintAll();
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            UnityEditor.SceneView.RepaintAll();
+        };
 #endif
     }
 
@@ -251,7 +254,10 @@ public class TutorialMapTool : MonoBehaviour
         tapDrawPile = true;
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.SceneView.RepaintAll();
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            UnityEditor.SceneView.RepaintAll();
+        };
 #endif
     }
 
@@ -263,7 +269,10 @@ public class TutorialMapTool : MonoBehaviour
         tapDrawPile = !tapDrawPile;
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.SceneView.RepaintAll();
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            UnityEditor.SceneView.RepaintAll();
+        };
 #endif
     }
 
@@ -275,7 +284,10 @@ public class TutorialMapTool : MonoBehaviour
         tapUndo = !tapUndo;
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.SceneView.RepaintAll();
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            UnityEditor.SceneView.RepaintAll();
+        };
 #endif
     }
 
@@ -287,7 +299,10 @@ public class TutorialMapTool : MonoBehaviour
         tapJoker = !tapJoker;
 #if UNITY_EDITOR
         UnityEditor.EditorUtility.SetDirty(this);
-        UnityEditor.SceneView.RepaintAll();
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            UnityEditor.SceneView.RepaintAll();
+        };
 #endif
     }
 

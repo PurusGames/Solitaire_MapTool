@@ -29,14 +29,22 @@ public static class TutorialStepPicker
 
         activeTool = tool;
         isPicking = true;
-        SceneView.RepaintAll();
+
+        EditorApplication.delayCall += () =>
+        {
+            SceneView.RepaintAll();
+        };
     }
 
     public static void StopPicking()
     {
         isPicking = false;
         activeTool = null;
-        SceneView.RepaintAll();
+
+        EditorApplication.delayCall += () =>
+        {
+            SceneView.RepaintAll();
+        };
     }
 
     private static void OnSceneGUI(SceneView sceneView)
@@ -49,9 +57,6 @@ public static class TutorialStepPicker
         int controlID = GUIUtility.GetControlID(FocusType.Passive);
         HandleUtility.AddDefaultControl(controlID);
 
-        // Change cursor to link pointer
-        EditorGUIUtility.AddCursorRect(new Rect(0, 0, sceneView.position.width, sceneView.position.height), MouseCursor.Link);
-
         // Handle Escape to cancel
         if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Escape)
         {
@@ -60,63 +65,81 @@ public static class TutorialStepPicker
             return;
         }
 
-        // Draw top banner in SceneView
+        // Draw top banner & cursor in SceneView GUI
         Handles.BeginGUI();
-        float bannerW = 440;
-        float bannerH = 55;
-        Rect rect = new Rect((sceneView.position.width - bannerW) / 2f, 15, bannerW, bannerH);
-        GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.95f);
-        GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
-
-        GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
+        try
         {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 13,
-            normal = { textColor = new Color(0.3f, 1f, 0.5f) }
-        };
-        GUIStyle subStyle = new GUIStyle(EditorStyles.miniLabel)
-        {
-            alignment = TextAnchor.MiddleCenter,
-            fontSize = 11,
-            normal = { textColor = new Color(0.85f, 0.85f, 0.85f) }
-        };
+            if (e.type == EventType.Repaint)
+            {
+                EditorGUIUtility.AddCursorRect(new Rect(0, 0, sceneView.position.width, sceneView.position.height), MouseCursor.Link);
+            }
 
-        GUI.Label(new Rect(rect.x, rect.y + 6, bannerW, 20), "🎯 PICK MODE: Click Card to add to tap_card", titleStyle);
-        GUI.Label(new Rect(rect.x, rect.y + 27, bannerW, 20), "Click DrawPile to toggle tap_drawpile | Click outside or [ESC] to Cancel", subStyle);
-        Handles.EndGUI();
+            float bannerW = 440;
+            float bannerH = 55;
+            Rect rect = new Rect((sceneView.position.width - bannerW) / 2f, 15, bannerW, bannerH);
+            GUI.backgroundColor = new Color(0.12f, 0.12f, 0.12f, 0.95f);
+            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
+
+            GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 13,
+                normal = { textColor = new Color(0.3f, 1f, 0.5f) }
+            };
+            GUIStyle subStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 11,
+                normal = { textColor = new Color(0.85f, 0.85f, 0.85f) }
+            };
+
+            GUI.Label(new Rect(rect.x, rect.y + 6, bannerW, 20), "🎯 PICK MODE: Click Card to add to tap_card", titleStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 27, bannerW, 20), "Click DrawPile to toggle tap_drawpile | Click outside or [ESC] to Cancel", subStyle);
+        }
+        finally
+        {
+            Handles.EndGUI();
+        }
 
         // Hover highlight
         CardGizmo hoveredCard = FindCardUnderMouse(e.mousePosition);
         TutorialDrawPile hoveredPile = hoveredCard == null ? FindDrawPileUnderMouse(e.mousePosition) : null;
 
-        if (hoveredCard != null)
+        if (e.type == EventType.Repaint)
         {
-            SpriteRenderer sr = hoveredCard.GetComponent<SpriteRenderer>();
-            Bounds b = sr != null ? sr.bounds : new Bounds(hoveredCard.transform.position, Vector3.one);
+            if (hoveredCard != null)
+            {
+                SpriteRenderer sr = hoveredCard.GetComponent<SpriteRenderer>();
+                Bounds b = sr != null ? sr.bounds : new Bounds(hoveredCard.transform.position, Vector3.one);
 
-            bool isDrawChild = activeTool.drawPileObj != null && hoveredCard.transform.IsChildOf(activeTool.drawPileObj.transform);
-            if (isDrawChild)
+                bool isDrawChild = activeTool.drawPileObj != null && hoveredCard.transform.IsChildOf(activeTool.drawPileObj.transform);
+                if (isDrawChild)
+                {
+                    Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
+                    Handles.DrawWireCube(b.center, b.size * 1.05f);
+                    string dpStatus = activeTool.tapDrawPile ? "ON" : "OFF";
+                    Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
+                }
+                else
+                {
+                    Handles.color = new Color(0.2f, 1f, 0.4f, 0.9f);
+                    Handles.DrawWireCube(b.center, b.size * 1.05f);
+                    string labelText = $"Click -> Add Step #{activeTool.GetNextStepNumber()}: {hoveredCard.name}";
+                    Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), labelText, EditorStyles.whiteBoldLabel);
+                }
+            }
+            else if (hoveredPile != null)
             {
                 Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
-                Handles.DrawWireCube(b.center, b.size * 1.05f);
+                Handles.DrawWireCube(hoveredPile.transform.position, Vector3.one * 1.5f);
                 string dpStatus = activeTool.tapDrawPile ? "ON" : "OFF";
-                Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
+                Handles.Label(hoveredPile.transform.position + Vector3.up * 1f, $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
             }
-            else
-            {
-                Handles.color = new Color(0.2f, 1f, 0.4f, 0.9f);
-                Handles.DrawWireCube(b.center, b.size * 1.05f);
-                string labelText = $"Click -> Add Step #{activeTool.GetNextStepNumber()}: {hoveredCard.name}";
-                Handles.Label(b.center + Vector3.up * (b.extents.y + 0.35f), labelText, EditorStyles.whiteBoldLabel);
-            }
-            sceneView.Repaint();
         }
-        else if (hoveredPile != null)
+
+        // Only repaint on mouse move to keep hover visuals responsive without recursive Repaint inside Repaint
+        if (e.type == EventType.MouseMove)
         {
-            Handles.color = new Color(0.3f, 0.8f, 1f, 0.9f);
-            Handles.DrawWireCube(hoveredPile.transform.position, Vector3.one * 1.5f);
-            string dpStatus = activeTool.tapDrawPile ? "ON" : "OFF";
-            Handles.Label(hoveredPile.transform.position + Vector3.up * 1f, $"Click -> Toggle tap_drawpile (Current: {dpStatus})", EditorStyles.whiteBoldLabel);
             sceneView.Repaint();
         }
 
@@ -156,7 +179,7 @@ public static class TutorialStepPicker
             }
             else
             {
-                // Clicked outside / empty space: Cancel picking as requested!
+                // Clicked outside / empty space: Cancel picking
                 Debug.Log("Card picking cancelled (clicked outside).");
                 StopPicking();
                 e.Use();
