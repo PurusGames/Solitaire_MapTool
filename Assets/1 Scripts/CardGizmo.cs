@@ -2,6 +2,14 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using System;
 
+public enum CardExtraType
+{
+    None,
+    Plus2,
+    Plus3,
+    Plus5
+}
+
 [RequireComponent(typeof(SpriteRenderer))]
 [RequireComponent(typeof(SortingGroup))]
 [ExecuteInEditMode]
@@ -22,6 +30,7 @@ public class CardGizmo : MonoBehaviour
     public CardRank rank = CardRank.Ace;
     
     public CardType type = CardType.Normal;
+    public CardExtraType extraType = CardExtraType.None;
     public CardObstacle obstacle = CardObstacle.None;
 
     [Header("Visual References")]
@@ -44,6 +53,7 @@ public class CardGizmo : MonoBehaviour
     private CardSuit _lastSuit = (CardSuit)(-1);
     private CardRank _lastRank = (CardRank)(-1);
     private CardType _lastType = (CardType)(-1);
+    private CardExtraType _lastExtraType = (CardExtraType)(-1);
     private CardObstacle _lastObstacle = (CardObstacle)(-1);
     private CardSpriteData _lastSpriteData;
     private bool _lastShowFaceDetails = true;
@@ -120,11 +130,12 @@ public class CardGizmo : MonoBehaviour
     public void UpdateVisuals()
     {
         if (spriteData == null) return;
-        if (_lastSuit == suit && _lastRank == rank && _lastType == type && _lastObstacle == obstacle && _lastSpriteData == spriteData && _lastShowFaceDetails == showFaceDetails) return;
+        if (_lastSuit == suit && _lastRank == rank && _lastType == type && _lastExtraType == extraType && _lastObstacle == obstacle && _lastSpriteData == spriteData && _lastShowFaceDetails == showFaceDetails) return;
 
         _lastSuit = suit;
         _lastRank = rank;
         _lastType = type;
+        _lastExtraType = extraType;
         _lastObstacle = obstacle;
         _lastSpriteData = spriteData;
         _lastShowFaceDetails = showFaceDetails;
@@ -216,6 +227,19 @@ public class CardGizmo : MonoBehaviour
     }
 
     public static string TypeToString(CardType t)
+    {
+        return t.ToString().ToLower();
+    }
+
+    public static CardExtraType ParseExtraType(string t)
+    {
+        if (string.IsNullOrEmpty(t)) return CardExtraType.None;
+        try {
+            return (CardExtraType)Enum.Parse(typeof(CardExtraType), t, true);
+        } catch { return CardExtraType.None; }
+    }
+
+    public static string ExtraTypeToString(CardExtraType t)
     {
         return t.ToString().ToLower();
     }

@@ -5,8 +5,9 @@ using System.Collections.Generic;
 [System.Serializable]
 public class TutorialCardData
 {
-    public int id;
+public int id;
     public string type;
+    public string extraType;
     public string suit;
     public int rank;
     public string obstacle;

@@ -12,6 +12,7 @@ public class CardGizmoEditor : Editor
         SerializedProperty suitProp = serializedObject.FindProperty("suit");
         SerializedProperty rankProp = serializedObject.FindProperty("rank");
         SerializedProperty typeProp = serializedObject.FindProperty("type");
+        SerializedProperty extraTypeProp = serializedObject.FindProperty("extraType");
         SerializedProperty obstacleProp = serializedObject.FindProperty("obstacle");
         SerializedProperty showFaceProp = serializedObject.FindProperty("showFaceDetails");
 
@@ -38,6 +39,11 @@ public class CardGizmoEditor : Editor
 
         // Type Property with +/-
         DrawEnumProp("Type", typeProp);
+
+        if (typeProp.enumValueIndex == (int)CardType.Extra)
+        {
+            DrawEnumProp("Extra Type", extraTypeProp);
+        }
 
         // Obstacle Property with +/-
         DrawEnumProp("Obstacle", obstacleProp);

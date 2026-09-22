@@ -549,6 +549,11 @@ public class TutorialMapToolEditor : Editor
             cardIndexCounter++;
 
             cData.type = CardGizmo.TypeToString(gizmo.type);
+            if (gizmo.type == CardType.Extra) {
+                cData.extraType = CardGizmo.ExtraTypeToString(gizmo.extraType);
+            } else {
+                cData.extraType = "none";
+            }
             cData.suit = gizmo.suit.ToString().ToLower();
             cData.rank = (int)gizmo.rank + 1;
             cData.obstacle = CardGizmo.ObstacleToString(gizmo.obstacle);
@@ -720,6 +725,11 @@ public class TutorialMapToolEditor : Editor
                     gizmo.suit = TutorialCheckCard.ParseSuit(cardData.suit);
                     gizmo.rank = (CardRank)Mathf.Clamp(cardData.rank - 1, 0, 12);
                     gizmo.type = CardGizmo.ParseType(cardData.type);
+                    if (gizmo.type == CardType.Extra) {
+                        gizmo.extraType = CardGizmo.ParseExtraType(cardData.extraType);
+                    } else {
+                        gizmo.extraType = CardExtraType.None;
+                    }
                     gizmo.obstacle = CardGizmo.ParseObstacle(cardData.obstacle);
                     gizmo.layer = cardData.layer;
                     gizmo.showFaceDetails = true;
