@@ -554,6 +554,14 @@ public class TutorialMapToolEditor : Editor
             CenterMap(tool);
         }
 
+        // Auto-fix targetType if the user configured steps or flags but forgot to change type to "tutorial"
+        bool hasConfiguredSteps = tool.tutorialSteps != null && tool.tutorialSteps.Count > 0;
+        bool hasConfiguredFlags = tool.tapDrawPile || tool.tapUndo || tool.tapJoker;
+        if ((hasConfiguredSteps || hasConfiguredFlags) && tool.targetType != "tutorial")
+        { 
+            tool.targetType = "tutorial";
+        }
+
         int targetId = 1;
         if (string.IsNullOrEmpty(tool.targetLevelId))
         {
@@ -688,7 +696,7 @@ public class TutorialMapToolEditor : Editor
                 bool hasSteps = lvl.tutorialConfig != null && lvl.tutorialConfig.tap_card != null && lvl.tutorialConfig.tap_card.Count > 0;
                 bool hasFlags = lvl.tutorialConfig != null && (lvl.tutorialConfig.tap_drawpile || lvl.tutorialConfig.tap_undo || lvl.tutorialConfig.tap_joker);
 
-                if (!isTutorial || (!hasSteps && !hasFlags))
+                if (!isTutorial)
                 {
                     lvl.tutorialConfig = null;
                 }

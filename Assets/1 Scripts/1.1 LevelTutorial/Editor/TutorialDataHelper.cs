@@ -85,7 +85,7 @@ namespace UnityEditor
             bool hasFlags = tool.tapDrawPile || tool.tapUndo || tool.tapJoker;
             bool isTutorial = level.type == "tutorial";
 
-            if (isTutorial && (hasSteps || hasFlags))
+            if (isTutorial)
             {
                 if (level.tutorialConfig == null)
                 {
