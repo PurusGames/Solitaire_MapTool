@@ -399,26 +399,6 @@ public class TutorialMapToolEditor : Editor
         GUILayout.Space(6);
         EditorGUILayout.BeginHorizontal();
 
-        // Add Card Step Button with Interactive Scene Click-to-Pick Mode
-        if (TutorialStepPicker.isPicking)
-        {
-            GUI.backgroundColor = new Color(1f, 0.7f, 0.2f);
-            if (GUILayout.Button("❌ Cancel Picking [ESC]", GUILayout.Height(26)))
-            {
-                TutorialStepPicker.StopPicking();
-            }
-            GUI.backgroundColor = Color.white;
-        }
-        else
-        {
-            GUI.backgroundColor = new Color(0.6f, 0.95f, 0.6f);
-            if (GUILayout.Button("🎯 + Click Card on Scene to Add Step", GUILayout.Height(26)))
-            {
-                TutorialStepPicker.StartPicking(tool);
-            }
-            GUI.backgroundColor = Color.white;
-        }
-
         // Quick add currently selected card
         CardGizmo selCard = Selection.activeGameObject != null ? Selection.activeGameObject.GetComponent<CardGizmo>() : null;
         bool canAddSel = selCard != null && selCard.transform.IsChildOf(tool.transform) &&
