@@ -268,27 +268,9 @@ public class CardGizmo : MonoBehaviour
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        // 1. Draw Face Up visual indicator
+        Vector3 basePos = transform.position + transform.up * 0.55f;
         if (faceUp)
         {
-            // Position badge nicely (bottom if tutorial step is at top, or top if no step)
-            float yOffset = tutorialStep > 0 ? -0.75f : 0.75f;
-            Vector3 badgePos = transform.position + transform.up * yOffset;
-
-            // Emerald green disc badge
-            UnityEditor.Handles.color = new Color(0.12f, 0.78f, 0.35f, 0.92f);
-            UnityEditor.Handles.DrawSolidDisc(badgePos, Vector3.forward, 0.35f);
-            UnityEditor.Handles.color = Color.white;
-            UnityEditor.Handles.DrawWireDisc(badgePos, Vector3.forward, 0.35f);
-
-            GUIStyle faceUpStyle = new GUIStyle();
-            faceUpStyle.normal.textColor = Color.white;
-            faceUpStyle.fontSize = 9;
-            faceUpStyle.fontStyle = FontStyle.Bold;
-            faceUpStyle.alignment = TextAnchor.MiddleCenter;
-            UnityEditor.Handles.Label(badgePos, "FACE\nUP", faceUpStyle);
-
-            // Green outline around card bounds
             Vector3 center = transform.position;
             Vector3 halfRight = transform.right * 0.75f;
             Vector3 halfUp = transform.up * 1.15f;
@@ -300,23 +282,48 @@ public class CardGizmo : MonoBehaviour
 
             UnityEditor.Handles.color = new Color(0.15f, 0.9f, 0.4f, 0.85f);
             UnityEditor.Handles.DrawPolyLine(p1, p2, p3, p4, p1);
+
+            Vector3 faceUpPos = (tutorialStep > 0)
+                ? (basePos - transform.right * (-0.15f) + transform.up * 0.05f)
+                : basePos;
+
+            UnityEditor.Handles.color = new Color(0.12f, 0.78f, 0.35f, 0.95f);
+            UnityEditor.Handles.DrawSolidDisc(faceUpPos, Vector3.forward, 0.35f);
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.DrawWireDisc(faceUpPos, Vector3.forward, 0.35f);
+
+            GUIStyle faceUpStyle = new GUIStyle();
+            faceUpStyle.normal.textColor = Color.white;
+            faceUpStyle.fontStyle = FontStyle.Bold;
+            faceUpStyle.alignment = TextAnchor.MiddleCenter;
+
+            if (tutorialStep > 0)
+            {
+                faceUpStyle.fontSize = 10;
+                Vector3 textPos = faceUpPos - transform.right * 0.08f + transform.up * 0.02f;
+                UnityEditor.Handles.Label(textPos, "UP", faceUpStyle);
+            }
+            else
+            {
+                faceUpStyle.fontSize = 9;
+                UnityEditor.Handles.Label(faceUpPos, "FACE\nUP", faceUpStyle);
+            }
         }
 
-        // 2. Draw Tutorial Step indicator
         if (tutorialStep > 0)
         {
-            Vector3 pos = transform.position + transform.up * 0.75f;
-            UnityEditor.Handles.color = new Color(1f, 0.5f, 0f, 0.9f);
-            UnityEditor.Handles.DrawSolidDisc(pos, Vector3.forward, 0.35f);
+            Vector3 stepPos = basePos;
+            UnityEditor.Handles.color = new Color(1f, 0.5f, 0f, 0.95f);
+            UnityEditor.Handles.DrawSolidDisc(stepPos, Vector3.forward, 0.35f);
             UnityEditor.Handles.color = Color.white;
-            UnityEditor.Handles.DrawWireDisc(pos, Vector3.forward, 0.35f);
+            UnityEditor.Handles.DrawWireDisc(stepPos, Vector3.forward, 0.35f);
 
             GUIStyle style = new GUIStyle();
             style.normal.textColor = Color.white;
             style.fontSize = 13;
             style.fontStyle = FontStyle.Bold;
             style.alignment = TextAnchor.MiddleCenter;
-            UnityEditor.Handles.Label(pos, $"{tutorialStep}", style);
+            UnityEditor.Handles.Label(stepPos, $"{tutorialStep}", style);
         }
     }
 #endif
