@@ -15,6 +15,71 @@ public class CardGizmoEditor : Editor
         SerializedProperty extraTypeProp = serializedObject.FindProperty("extraType");
         SerializedProperty obstacleProp = serializedObject.FindProperty("obstacle");
         SerializedProperty showFaceProp = serializedObject.FindProperty("showFaceDetails");
+        SerializedProperty faceUpProp = serializedObject.FindProperty("faceUp");
+
+        GUILayout.Space(5);
+
+        // Face Up Button & Toggle
+        EditorGUILayout.BeginVertical("box");
+        Color activeColor = new Color(0.2f, 0.88f, 0.4f);
+        Color inactiveColor = new Color(0.85f, 0.85f, 0.85f);
+
+        bool allFaceUp = true;
+        bool anyFaceUp = false;
+        foreach (var t in targets)
+        {
+            CardGizmo g = (CardGizmo)t;
+            if (g != null)
+            {
+                if (g.faceUp) anyFaceUp = true;
+                else allFaceUp = false;
+            }
+        }
+
+        GUI.backgroundColor = anyFaceUp ? activeColor : inactiveColor;
+        string faceUpBtnLabel = (targets.Length > 1)
+            ? (allFaceUp ? "✔ All Selected: FACE UP" : (anyFaceUp ? "~ Mixed (Click: Turn All UP)" : "✖ All Selected: FACE DOWN"))
+            : (faceUpProp.boolValue ? "✔ Card is FACE UP" : "✖ Card is FACE DOWN (Default)");
+
+        if (GUILayout.Button(faceUpBtnLabel, GUILayout.Height(30)))
+        {
+            Undo.RecordObjects(targets, "Toggle Face Up");
+            bool targetVal = !allFaceUp;
+            foreach (var t in targets)
+            {
+                CardGizmo g = (CardGizmo)t;
+                if (g != null)
+                {
+                    g.faceUp = targetVal;
+                    EditorUtility.SetDirty(g);
+                }
+            }
+            faceUpProp.boolValue = targetVal;
+            SceneView.RepaintAll();
+        }
+
+        GUI.backgroundColor = Color.white;
+
+        EditorGUILayout.BeginHorizontal();
+        EditorGUILayout.PropertyField(faceUpProp, new GUIContent("Face Up"));
+        if (GUILayout.Button("Toggle", GUILayout.Width(70)))
+        {
+            Undo.RecordObjects(targets, "Toggle Face Up");
+            bool targetVal = !allFaceUp;
+            foreach (var t in targets)
+            {
+                CardGizmo g = (CardGizmo)t;
+                if (g != null)
+                {
+                    g.faceUp = targetVal;
+                    EditorUtility.SetDirty(g);
+                }
+            }
+            faceUpProp.boolValue = targetVal;
+            SceneView.RepaintAll();
+        }
+        EditorGUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
 
         GUILayout.Space(5);
 
@@ -54,6 +119,50 @@ public class CardGizmoEditor : Editor
 
         GUILayout.Space(10);
         DrawDefaultInspector();
+    }
+
+    private void OnSceneGUI()
+    {
+        CardGizmo gizmo = (CardGizmo)target;
+        if (gizmo == null) return;
+
+        // Position a small, convenient Scene GUI button near the card
+        Vector3 screenPos = HandleUtility.WorldToGUIPoint(gizmo.transform.position + gizmo.transform.up * 1.35f);
+
+        Handles.BeginGUI();
+        try
+        {
+            Rect btnRect = new Rect(screenPos.x - 45, screenPos.y - 12, 90, 24);
+            GUI.backgroundColor = gizmo.faceUp ? new Color(0.2f, 0.9f, 0.4f, 0.95f) : new Color(0.2f, 0.2f, 0.2f, 0.85f);
+            string label = gizmo.faceUp ? "✔ Face UP" : "Face DOWN";
+            GUIStyle btnStyle = new GUIStyle(GUI.skin.button)
+            {
+                fontSize = 10,
+                fontStyle = FontStyle.Bold
+            };
+            btnStyle.normal.textColor = gizmo.faceUp ? Color.black : Color.white;
+
+            if (GUI.Button(btnRect, label, btnStyle))
+            {
+                Undo.RecordObjects(targets, "Toggle Face Up");
+                bool newVal = !gizmo.faceUp;
+                foreach (var t in targets)
+                {
+                    CardGizmo g = (CardGizmo)t;
+                    if (g != null)
+                    {
+                        g.faceUp = newVal;
+                        EditorUtility.SetDirty(g);
+                    }
+                }
+                SceneView.RepaintAll();
+            }
+            GUI.backgroundColor = Color.white;
+        }
+        finally
+        {
+            Handles.EndGUI();
+        }
     }
 
     private void DrawTutorialStepSection()

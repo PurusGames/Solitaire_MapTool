@@ -23,6 +23,9 @@ public class CardGizmo : MonoBehaviour
     [HideInInspector]
     public int cardId = 0;
 
+    [Header("Gameplay Settings")]
+    public bool faceUp = false;
+
     [Header("Card Visual Auto-Update")]
     public CardSpriteData spriteData;
     public bool showFaceDetails = false;
@@ -57,6 +60,11 @@ public class CardGizmo : MonoBehaviour
     private CardObstacle _lastObstacle = (CardObstacle)(-1);
     private CardSpriteData _lastSpriteData;
     private bool _lastShowFaceDetails = true;
+
+    public void ToggleFaceUp()
+    {
+        faceUp = !faceUp;
+    }
 
     public TutorialMapTool GetTutorialMapTool()
     {
@@ -260,9 +268,44 @@ public class CardGizmo : MonoBehaviour
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
+        // 1. Draw Face Up visual indicator
+        if (faceUp)
+        {
+            // Position badge nicely (bottom if tutorial step is at top, or top if no step)
+            float yOffset = tutorialStep > 0 ? -0.75f : 0.75f;
+            Vector3 badgePos = transform.position + transform.up * yOffset;
+
+            // Emerald green disc badge
+            UnityEditor.Handles.color = new Color(0.12f, 0.78f, 0.35f, 0.92f);
+            UnityEditor.Handles.DrawSolidDisc(badgePos, Vector3.forward, 0.35f);
+            UnityEditor.Handles.color = Color.white;
+            UnityEditor.Handles.DrawWireDisc(badgePos, Vector3.forward, 0.35f);
+
+            GUIStyle faceUpStyle = new GUIStyle();
+            faceUpStyle.normal.textColor = Color.white;
+            faceUpStyle.fontSize = 9;
+            faceUpStyle.fontStyle = FontStyle.Bold;
+            faceUpStyle.alignment = TextAnchor.MiddleCenter;
+            UnityEditor.Handles.Label(badgePos, "FACE\nUP", faceUpStyle);
+
+            // Green outline around card bounds
+            Vector3 center = transform.position;
+            Vector3 halfRight = transform.right * 0.75f;
+            Vector3 halfUp = transform.up * 1.15f;
+
+            Vector3 p1 = center - halfRight - halfUp;
+            Vector3 p2 = center - halfRight + halfUp;
+            Vector3 p3 = center + halfRight + halfUp;
+            Vector3 p4 = center + halfRight - halfUp;
+
+            UnityEditor.Handles.color = new Color(0.15f, 0.9f, 0.4f, 0.85f);
+            UnityEditor.Handles.DrawPolyLine(p1, p2, p3, p4, p1);
+        }
+
+        // 2. Draw Tutorial Step indicator
         if (tutorialStep > 0)
         {
-            Vector3 pos = transform.position + Vector3.up * 0.7f;
+            Vector3 pos = transform.position + transform.up * 0.75f;
             UnityEditor.Handles.color = new Color(1f, 0.5f, 0f, 0.9f);
             UnityEditor.Handles.DrawSolidDisc(pos, Vector3.forward, 0.35f);
             UnityEditor.Handles.color = Color.white;

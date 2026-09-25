@@ -9,6 +9,7 @@ public class TutorialCardData
     public string type;
     public string extraType;
     public string suit;
+    public bool faceUp;
     public int rank;
     public string obstacle;
     public float x;

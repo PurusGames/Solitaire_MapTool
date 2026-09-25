@@ -341,9 +341,20 @@ public class TutorialMapToolEditor : Editor
 
                     if (card != null)
                     {
-                        GUILayout.Label($"ID:{card.cardId} ({card.suit} {card.rank})", EditorStyles.miniLabel, GUILayout.Width(110));
+                        string upTag = card.faceUp ? " [UP]" : "";
+                        GUILayout.Label($"ID:{card.cardId} ({card.suit} {card.rank}){upTag}", EditorStyles.miniLabel, GUILayout.Width(105));
 
-                        if (GUILayout.Button("Select", GUILayout.Width(48)))
+                        GUI.backgroundColor = card.faceUp ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.85f, 0.85f, 0.85f);
+                        if (GUILayout.Button(card.faceUp ? "UP" : "--", GUILayout.Width(28), GUILayout.Height(18)))
+                        {
+                            Undo.RecordObject(card, "Toggle Face Up");
+                            card.faceUp = !card.faceUp;
+                            EditorUtility.SetDirty(card);
+                            SceneView.RepaintAll();
+                        }
+                        GUI.backgroundColor = Color.white;
+
+                        if (GUILayout.Button("Select", GUILayout.Width(45)))
                         {
                             Selection.activeGameObject = card.gameObject;
                         }
@@ -412,6 +423,19 @@ public class TutorialMapToolEditor : Editor
             tool.AddCardStep(selCard);
         }
         GUI.backgroundColor = Color.white;
+
+        if (canAddSel)
+        {
+            GUI.backgroundColor = selCard.faceUp ? new Color(0.3f, 0.9f, 0.4f) : new Color(0.85f, 0.85f, 0.85f);
+            if (GUILayout.Button(selCard.faceUp ? "Face Up: ON" : "Face Up: OFF", GUILayout.Height(26), GUILayout.Width(95)))
+            {
+                Undo.RecordObject(selCard, "Toggle Face Up");
+                selCard.faceUp = !selCard.faceUp;
+                EditorUtility.SetDirty(selCard);
+                SceneView.RepaintAll();
+            }
+            GUI.backgroundColor = Color.white;
+        }
         GUI.enabled = true;
 
         EditorGUILayout.EndHorizontal();
@@ -530,6 +554,7 @@ public class TutorialMapToolEditor : Editor
         {
             if (tool.cardSpriteData != null) gizmo.spriteData = tool.cardSpriteData;
             gizmo.showFaceDetails = true;
+            gizmo.faceUp = false;
             gizmo.tutorialStep = 0;
             gizmo.layer = 0;
             gizmo.UpdateVisuals();
@@ -645,6 +670,7 @@ public class TutorialMapToolEditor : Editor
                 cData.extraType = "none";
             }
             cData.suit = gizmo.suit.ToString().ToLower();
+            cData.faceUp = gizmo.faceUp;
             cData.rank = (int)gizmo.rank + 1;
             cData.obstacle = CardGizmo.ObstacleToString(gizmo.obstacle);
 
@@ -718,6 +744,10 @@ public class TutorialMapToolEditor : Editor
             // Replace default empty serialized tutorialConfig with empty object {}
             string emptyConfigPattern = @"\""tutorialConfig\""\s*:\s*\{\s*\""tap_card\""\s*:\s*\[\s*\]\s*,\s*\""tap_drawpile\""\s*:\s*false\s*,\s*\""tap_undo\""\s*:\s*false\s*,\s*\""tap_joker\""\s*:\s*false\s*\}";
             json = System.Text.RegularExpressions.Regex.Replace(json, emptyConfigPattern, "\"tutorialConfig\": {}");
+
+            // Remove "faceUp": false lines so faceUp is only saved when true
+            json = System.Text.RegularExpressions.Regex.Replace(json, @"\r?\n[ \t]*\""faceUp\""\s*:\s*false,", "");
+            json = System.Text.RegularExpressions.Regex.Replace(json, @",\r?\n[ \t]*\""faceUp\""\s*:\s*false(?=\r?\n)", "");
         }
         File.WriteAllText(tool.jsonPath, json);
         AssetDatabase.Refresh();
@@ -799,6 +829,7 @@ public class TutorialMapToolEditor : Editor
                     gizmo.cardId = cardData.id;
                     gizmo.suit = TutorialCheckCard.ParseSuit(cardData.suit);
                     gizmo.rank = (CardRank)Mathf.Clamp(cardData.rank - 1, 0, 12);
+                    gizmo.faceUp = cardData.faceUp;
                     gizmo.type = CardGizmo.ParseType(cardData.type);
                     if (gizmo.type == CardType.Extra) {
                         gizmo.extraType = CardGizmo.ParseExtraType(cardData.extraType);

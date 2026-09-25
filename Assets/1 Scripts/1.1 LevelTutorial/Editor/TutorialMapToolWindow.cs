@@ -162,6 +162,19 @@ public class TutorialMapToolWindow : EditorWindow
         if (isCanvasCard)
         {
             EditorGUILayout.BeginHorizontal();
+            GUI.backgroundColor = selCard.faceUp ? new Color(0.2f, 0.88f, 0.4f) : new Color(0.88f, 0.88f, 0.88f);
+            string faceUpBtnText = selCard.faceUp ? "✔ Face Up: ON (Starts Face Up)" : "✖ Face Up: OFF (Default)";
+            if (GUILayout.Button(faceUpBtnText, GUILayout.Height(24)))
+            {
+                Undo.RecordObject(selCard, "Toggle Card Face Up");
+                selCard.faceUp = !selCard.faceUp;
+                EditorUtility.SetDirty(selCard);
+                SceneView.RepaintAll();
+            }
+            GUI.backgroundColor = Color.white;
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
             if (selCard.tutorialStep > 0)
             {
                 GUI.backgroundColor = new Color(1f, 0.9f, 0.5f);
